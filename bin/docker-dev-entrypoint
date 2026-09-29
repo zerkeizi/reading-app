@@ -1,0 +1,11 @@
+#!/bin/bash -e
+
+# Remove a stale pid file left behind when the container was stopped abruptly
+rm -f /rails/tmp/pids/server.pid
+
+# If running the rails server then create or migrate existing database
+if [[ " $* " == *" server "* ]]; then
+  ./bin/rails db:prepare
+fi
+
+exec "${@}"

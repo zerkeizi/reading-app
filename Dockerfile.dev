@@ -1,0 +1,43 @@
+# syntax=docker/dockerfile:1
+
+# Development image. The production image lives in ./Dockerfile.
+# The app source is bind-mounted by docker-compose.yml, so code is not copied here.
+
+ARG RUBY_VERSION=3.3.9
+ARG NODE_VERSION=22
+FROM docker.io/library/node:${NODE_VERSION}-bookworm-slim AS node
+
+FROM docker.io/library/ruby:${RUBY_VERSION}-slim
+
+WORKDIR /rails
+
+# Build tools for native gems, libpq for pg, postgresql-client for db:console/dbconsole
+RUN apt-get update -qq && \
+    apt-get install --no-install-recommends -y \
+      build-essential curl git libpq-dev libvips libyaml-dev pkg-config postgresql-client && \
+    rm -rf /var/lib/apt/lists /var/cache/apt/archives
+
+# Node.js (needed by Vite for the React/Inertia frontend)
+COPY --from=node /usr/local/bin/node /usr/local/bin/node
+COPY --from=node /usr/local/lib/node_modules /usr/local/lib/node_modules
+RUN ln -s /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm && \
+    ln -s /usr/local/lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx
+
+# Non-root user matching the typical host UID so generated files aren't owned by root
+ARG UID=1000
+ARG GID=1000
+RUN groupadd --gid ${GID} rails && \
+    useradd rails --uid ${UID} --gid ${GID} --create-home --shell /bin/bash && \
+    chown -R rails:rails /rails /usr/local/bundle
+
+USER rails
+
+ENV BUNDLE_PATH="/usr/local/bundle"
+
+COPY --chown=rails:rails Gemfile Gemfile.lock ./
+RUN bundle install
+
+ENTRYPOINT ["/rails/bin/docker-dev-entrypoint"]
+
+EXPOSE 3000
+CMD ["./bin/rails", "server", "-b", "0.0.0.0"]
