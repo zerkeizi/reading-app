@@ -55,5 +55,28 @@ RSpec.describe Reading, type: :model do
 
       expect(book.reload.last_read_at).to be_within(1.second).of(new_reading.created_at)
     end
+
+    it "goes back to the newest remaining reading when the latest one is removed" do
+      book = books(:dune)
+      older = readings(:one_dune)
+      older.update_column(:created_at, 3.days.ago)
+      newest = Reading.create!(user: users(:two), book: book)
+
+      newest.destroy
+
+      expect(book.reload.last_read_at).to be_within(1.second).of(older.created_at)
+    end
+
+    it "is cleared when the book has no readings left" do
+      book = books(:dune)
+
+      readings(:one_dune).destroy
+
+      expect(book.reload.last_read_at).to be_nil
+    end
+
+    it "does not fail when the book itself is destroyed with its readings" do
+      expect { books(:dune).destroy }.not_to raise_error
+    end
   end
 end

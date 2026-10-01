@@ -44,6 +44,36 @@ RSpec.describe Book, type: :model do
     end
   end
 
+  describe ".filter_by" do
+    let!(:tolkien) { Book.create!(title: "The Hobbit", author: "J.R.R. Tolkien", genre: "Fantasy", publication_year: 1937, external_id: "/works/OLHOBBIT") }
+    let!(:percent) { Book.create!(title: "100% Fun", author: "100% Author", external_id: "/works/OLPERCENT") }
+
+    it "matches part of the author, ignoring case" do
+      expect(Book.filter_by("author", "tolk")).to contain_exactly(tolkien)
+    end
+
+    it "matches part of the genre, ignoring case" do
+      expect(Book.filter_by("genre", "fanta")).to contain_exactly(tolkien)
+    end
+
+    it "matches the exact publication year" do
+      expect(Book.filter_by("year", "1937")).to contain_exactly(tolkien)
+      expect(Book.filter_by("year", "193")).to be_empty
+    end
+
+    it "returns every book for a blank query" do
+      expect(Book.filter_by("author", "  ")).to match_array(Book.all)
+    end
+
+    it "treats LIKE wildcards in the query as plain text" do
+      expect(Book.filter_by("author", "%")).to contain_exactly(percent)
+    end
+
+    it "filters by author when the field is unknown" do
+      expect(Book.filter_by("title", "tolk")).to contain_exactly(tolkien)
+    end
+  end
+
   describe "#cover_url" do
     it "builds the OpenLibrary cover URL in medium size by default" do
       expect(book.cover_url).to eq("https://covers.openlibrary.org/b/id/#{book.cover_id}-M.jpg")

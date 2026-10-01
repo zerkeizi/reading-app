@@ -25,7 +25,7 @@ function Frame({ children }: { children: ReactNode }) {
       {flash.notice && <p role="status">{flash.notice}</p>}
       {flash.alert && <p role="alert">{flash.alert}</p>}
 
-      <main>{children}</main>
+      <main className="mx-auto w-full max-w-6xl px-4 py-6 md:px-8">{children}</main>
 
       <AddBookButton />
       {modal === 'auth' && <AuthModal />}

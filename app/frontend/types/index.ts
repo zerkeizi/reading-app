@@ -28,3 +28,16 @@ export type Reading = {
   review: string | null
   read_on: string | null
 }
+
+// Home list: a book plus the signed-in user's reading id for it (null = not read)
+export type CatalogBook = Book & {
+  reading_id: number | null
+}
+
+export type FilterField = 'author' | 'genre' | 'year'
+
+export type Pagination = {
+  page: number
+  total_pages: number
+  total_count: number
+}

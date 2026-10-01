@@ -70,3 +70,6 @@ gem "vite_rails", "~> 3.11"
 
 # Authorization policies (who can do what with each record) [https://github.com/varvet/pundit]
 gem "pundit"
+
+# Pagination for the home catalog [https://github.com/kaminari/kaminari]
+gem "kaminari"
