@@ -21,10 +21,13 @@ class Book < ApplicationRecord
   }
 
   # Covers are served by OpenLibrary; only their id (cover_i in search results) is stored.
-  def cover_url(size = "M")
+  # Class method so OpenLibrary search results build the same URL before a Book exists.
+  def self.cover_url_for(cover_id, size = "M")
     return if cover_id.blank?
     raise ArgumentError, "unknown cover size: #{size}" unless COVER_SIZES.include?(size)
 
     "https://covers.openlibrary.org/b/id/#{cover_id}-#{size}.jpg"
   end
+
+  def cover_url(size = "M") = self.class.cover_url_for(cover_id, size)
 end

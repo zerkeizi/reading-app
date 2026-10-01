@@ -73,3 +73,6 @@ gem "pundit"
 
 # Pagination for the home catalog [https://github.com/kaminari/kaminari]
 gem "kaminari"
+
+# HTTP client for the OpenLibrary API [https://lostisland.github.io/faraday/]
+gem "faraday"
