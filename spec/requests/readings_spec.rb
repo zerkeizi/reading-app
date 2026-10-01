@@ -39,6 +39,53 @@ RSpec.describe "Readings", type: :request do
     end
   end
 
+  describe "POST /readings with an OpenLibrary external_id (Add Book modal)" do
+    let(:search_url) { %r{\Ahttps://openlibrary\.org/search\.json} }
+
+    before { sign_in users(:two) }
+
+    def stub_work(fixture: "openlibrary/search_dune.json")
+      stub_request(:get, search_url)
+        .to_return(status: 200, body: file_fixture(fixture).read, headers: { "Content-Type" => "application/json" })
+    end
+
+    it "imports a new book with OpenLibrary's data and opens its page" do
+      stub_work
+      books(:dune).destroy
+
+      expect { post readings_path, params: { external_id: "/works/OL893414W", title: "Fake title" }, headers: }
+        .to change(Book, :count).by(1).and change(users(:two).readings, :count).by(1)
+
+      book = Book.find_by!(external_id: "/works/OL893414W")
+      expect(book.title).to eq("Dune")
+      expect(response).to redirect_to(book_path(book))
+    end
+
+    it "reuses a book already in the catalog without calling OpenLibrary" do
+      expect { post readings_path, params: { external_id: book.external_id }, headers: }
+        .to change(users(:two).readings, :count).by(1).and not_change(Book, :count)
+
+      expect(WebMock).not_to have_requested(:get, search_url)
+    end
+
+    it "creates nothing when OpenLibrary is unavailable" do
+      stub_request(:get, search_url).to_timeout
+
+      expect { post readings_path, params: { external_id: "/works/OL0W" }, headers: }
+        .to not_change(Book, :count).and not_change(Reading, :count)
+
+      expect(flash[:alert]).to match(/OpenLibrary indisponível/)
+    end
+
+    it "creates nothing for a key OpenLibrary doesn't know" do
+      stub_work(fixture: "openlibrary/search_empty.json")
+
+      expect { post readings_path, params: { external_id: "/works/OL0W" }, headers: }.not_to change(Book, :count)
+
+      expect(flash[:alert]).to match(/não encontrado/)
+    end
+  end
+
   describe "PATCH /readings/:id" do
     let(:changes) { { read_on: "2026-09-01", rate: 3.5, review: "Mudou minha vida." } }
 

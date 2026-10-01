@@ -6,6 +6,16 @@ RSpec.describe OpenLibrary::Genre do
       expect(described_class.from_subjects([ "Dune (Imaginary place)", "Fiction", "Science fiction" ])).to eq("Ficção científica")
     end
 
+    it "picks the genre matched by the most subjects, not the first one listed" do
+      subjects = [ "Science fiction", "Fantasy fiction", "Fantasy", "Middle Earth (Imaginary place), fantasy", "Classics" ]
+
+      expect(described_class.from_subjects(subjects)).to eq("Fantasia")
+    end
+
+    it "breaks ties with the priority order" do
+      expect(described_class.from_subjects([ "Fantasy", "Science fiction" ])).to eq("Ficção científica")
+    end
+
     it "falls back to Ficção for plain fiction" do
       expect(described_class.from_subjects([ "Fiction", "Families" ])).to eq("Ficção")
     end
