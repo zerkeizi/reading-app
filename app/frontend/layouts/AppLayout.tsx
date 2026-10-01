@@ -22,8 +22,14 @@ function Frame({ children }: { children: ReactNode }) {
   return (
     <>
       <Header user={props.current_user} />
-      {flash.notice && <p role="status">{flash.notice}</p>}
-      {flash.alert && <p role="alert">{flash.alert}</p>}
+      {(flash.notice || flash.alert) && (
+        <div className="border-b-2 border-ink bg-placeholder">
+          <div className="mx-auto max-w-6xl px-4 py-2 text-sm font-bold md:px-8">
+            {flash.notice && <p role="status">{flash.notice}</p>}
+            {flash.alert && <p role="alert">{flash.alert}</p>}
+          </div>
+        </div>
+      )}
 
       <main className="mx-auto w-full max-w-6xl px-4 py-6 md:px-8">{children}</main>
 

@@ -6,7 +6,7 @@ class RegistrationsController < ApplicationController
 
     if user.save
       start_new_session_for user
-      redirect_back_or_to root_path, notice: "Welcome, #{user.name}!"
+      redirect_back_or_to root_path, notice: "Bem-vindo(a), #{user.name}!"
     else
       redirect_back_or_to root_path, inertia: { errors: user.errors.to_hash(true) }
     end

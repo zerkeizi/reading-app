@@ -10,7 +10,7 @@ class ApplicationController < ActionController::Base
 
   # 303 See Other: after a PATCH/DELETE, Inertia needs it so the browser follows the redirect with a GET
   rescue_from Pundit::NotAuthorizedError do
-    redirect_back_or_to root_path, alert: "You are not allowed to do that.", status: :see_other
+    redirect_back_or_to root_path, alert: "Você não tem permissão para fazer isso.", status: :see_other
   end
 
   private
