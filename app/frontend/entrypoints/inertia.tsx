@@ -1,7 +1,11 @@
 import { createInertiaApp } from '@inertiajs/react'
+import AppLayout from '@/layouts/AppLayout'
 
 void createInertiaApp({
   pages: "../pages",
+
+  // Default persistent layout for every page: header, flash, "+" button and modals
+  layout: () => AppLayout,
 
   strictMode: true,
 

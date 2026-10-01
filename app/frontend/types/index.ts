@@ -3,4 +3,28 @@ export type FlashData = {
   alert?: string
 }
 
-export type SharedProps = {}
+export type User = {
+  id: number
+  name: string
+}
+
+// Props Rails shares with every page (inertia_share in InertiaController)
+export type SharedProps = {
+  current_user: User | null
+}
+
+export type Book = {
+  id: number
+  title: string
+  author: string | null
+  publication_year: number | null
+  genre: string | null
+  cover_url: string | null
+}
+
+export type Reading = {
+  id: number
+  rate: number | null
+  review: string | null
+  read_on: string | null
+}

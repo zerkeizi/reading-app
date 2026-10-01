@@ -4,8 +4,10 @@ Rails.application.routes.draw do
     get "(*path)", to: redirect { |params, req| "#{req.protocol}localhost:#{req.port}/#{params[:path]}" }
   end
   root "books#index"
-  resources :books, only: :index
+  resources :books, only: %i[index show]
+  resource :profile, only: :show
   resource :session
+  resource :registration, only: :create
   resources :passwords, param: :token
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
