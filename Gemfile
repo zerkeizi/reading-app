@@ -67,3 +67,6 @@ end
 
 gem "inertia_rails", "~> 3.22"
 gem "vite_rails", "~> 3.11"
+
+# Authorization policies (who can do what with each record) [https://github.com/varvet/pundit]
+gem "pundit"
