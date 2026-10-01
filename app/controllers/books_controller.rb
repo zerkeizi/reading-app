@@ -5,7 +5,11 @@ class BooksController < InertiaController
   # Public actions skip require_authentication, so the session must be resumed to know who is logged in
   before_action :resume_session, only: %i[index show]
   after_action :verify_authorized
+  # /books.json is a public API: limit scraping without affecting the HTML pages
+  rate_limit to: 60, within: 1.minute, only: :index, if: -> { request.format.json? },
+             with: -> { render json: { error: "Too many requests. Try again in a minute." }, status: :too_many_requests }
 
+  # GET / and /books render the Explorar page; GET /books.json returns the same catalog as JSON.
   def index
     authorize Book
     field = Book::FILTER_FIELDS.include?(params[:field]) ? params[:field] : "author"
@@ -13,13 +17,27 @@ class BooksController < InertiaController
               .filter_by(field, params[:q])
               .order(Book.arel_table[:last_read_at].desc.nulls_last, :id)
               .page(params[:page]).per(PER_PAGE)
-    reading_ids = reading_ids_for(books)
+    filters = { q: params[:q].to_s, field: }
+    pagination = { page: books.current_page, total_pages: books.total_pages, total_count: books.total_count }
 
-    render inertia: {
-      books: books.map { |book| book_props(book).merge(reading_id: reading_ids[book.id]) },
-      filters: { q: params[:q].to_s, field: },
-      pagination: { page: books.current_page, total_pages: books.total_pages, total_count: books.total_count }
-    }
+    respond_to do |format|
+      format.html do
+        reading_ids = reading_ids_for(books)
+        render inertia: {
+          books: books.map { |book| book_props(book).merge(reading_id: reading_ids[book.id]) },
+          filters:,
+          pagination:
+        }
+      end
+      # Public and read-only: the same books the home page shows, without any user data (no reading_id)
+      format.json do
+        render json: {
+          books: books.map { |book| book_props(book).merge(book.as_json(only: %i[external_id last_read_at])) },
+          filters:,
+          pagination:
+        }
+      end
+    end
   end
 
   def show

@@ -83,6 +83,36 @@ RSpec.describe "Books", type: :request do
     end
   end
 
+  describe "GET /books.json" do
+    it "is public and returns the catalog with pagination" do
+      get books_path(format: :json)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.media_type).to eq("application/json")
+      body = response.parsed_body
+      expect(body["books"].first).to include("id", "title", "author", "publication_year", "genre", "cover_url",
+                                             "external_id", "last_read_at")
+      expect(body["pagination"]).to include("page" => 1, "total_count" => Book.count)
+    end
+
+    it "applies the same filters as the home page" do
+      Book.create!(title: "The Hobbit", author: "J.R.R. Tolkien", external_id: "/works/OLHOBBITJSON")
+
+      get books_path(format: :json), params: { q: "tolk", field: "author" }
+
+      expect(response.parsed_body["books"].map { |book| book["title"] }).to eq([ "The Hobbit" ])
+      expect(response.parsed_body["filters"]).to eq("q" => "tolk", "field" => "author")
+    end
+
+    it "never exposes user data, even when signed in" do
+      sign_in users(:one)
+
+      get books_path(format: :json)
+
+      expect(response.parsed_body["books"]).to all(satisfy { |book| !book.key?("reading_id") })
+    end
+  end
+
   describe "GET /books/:id" do
     let(:book) { books(:dune) }
 
