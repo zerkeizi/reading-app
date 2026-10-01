@@ -1,30 +1,24 @@
-type IBook = {
-  id: number
-  author: string
-  title: string
-  genre: string
-  last_read_at: string
-  publication_year: number
-  external_id: string
-  created_at: string
-  updated_at: string
-}
+import { Link } from '@inertiajs/react'
+import type { Book } from '@/types'
 
-export default function Index({ books }: { books: IBook[] }) {
-  console.log("# books: ", books)
+export default function Index({ books }: { books: Book[] }) {
   return (
     <>
-      <h1 className="font-bold text-4xl">Books#index</h1>
-      <p>Find me in app/frontend/pages/books/index.tsx</p>
+      <h1>Livros</h1>
 
-
-      <div>
-        <ul className="grid-3">
-          { books.map((book) =>
-            <li key={book.id}>{book.title}</li> 
-          ) }
+      {books.length === 0 ? (
+        <p>Nenhum livro cadastrado ainda.</p>
+      ) : (
+        <ul>
+          {books.map((book) => (
+            <li key={book.id}>
+              <Link href={`/books/${book.id}`}>{book.title}</Link>
+              {book.author && ` — ${book.author}`}
+              {book.publication_year && ` (${book.publication_year})`}
+            </li>
+          ))}
         </ul>
-      </div>
+      )}
     </>
-  );
+  )
 }

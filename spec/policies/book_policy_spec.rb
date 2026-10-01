@@ -17,6 +17,12 @@ RSpec.describe BookPolicy do
     end
   end
 
+  permissions :show? do
+    it "lets guests see a book" do
+      expect(subject).to permit(nil, book)
+    end
+  end
+
   permissions :create? do
     it "lets a signed-in user register a book" do
       expect(subject).to permit(users(:one), Book)
