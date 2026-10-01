@@ -25,19 +25,16 @@ class BooksController < InertiaController
   def show
     book = Book.find(params[:id])
     authorize book
+    reading = Current.user&.readings&.find_by(book:)
 
     render inertia: {
       book: book_props(book),
-      readings: book.readings.includes(:user).order(created_at: :desc).map do |reading|
-        {
-          id: reading.id,
-          rate: reading.rate&.to_f,
-          review: reading.review,
-          read_on: reading.read_on,
-          reader: reading.user.name,
-          can_edit: policy(reading).update?
-        }
-      end
+      my_reading: reading && {
+        id: reading.id,
+        read_on: reading.read_on,
+        rate: reading.rate&.to_f,
+        review: reading.review
+      }
     }
   end
 

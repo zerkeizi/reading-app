@@ -86,35 +86,29 @@ RSpec.describe "Books", type: :request do
   describe "GET /books/:id" do
     let(:book) { books(:dune) }
 
-    it "is public and lists the book's readings" do
+    it "is public: guests see the book without a reading" do
       get book_path(book)
 
       expect(response).to have_http_status(:ok)
       expect_inertia.to render_component("books/show")
       expect(inertia.props[:book]).to include("id" => book.id, "title" => book.title)
-      expect(inertia.props[:readings].map { |reading| reading[:reader] }).to eq([ users(:one).name ])
+      expect(inertia.props[:my_reading]).to be_nil
     end
 
-    it "sends the rate as a number, not a string" do
-      get book_path(book)
-
-      expect(inertia.props[:readings].first[:rate]).to eq(4.5)
-    end
-
-    it "lets only the owner edit their reading" do
-      Reading.create!(user: users(:two), book:)
+    it "sends the signed-in user's own reading, with the rate as a number" do
       sign_in users(:one)
 
       get book_path(book)
 
-      permissions = inertia.props[:readings].to_h { |reading| [ reading[:reader], reading[:can_edit] ] }
-      expect(permissions).to eq(users(:one).name => true, users(:two).name => false)
+      expect(inertia.props[:my_reading]).to include("id" => readings(:one_dune).id, "rate" => 4.5)
     end
 
-    it "does not let guests edit anything" do
+    it "does not send someone else's reading" do
+      sign_in users(:two)
+
       get book_path(book)
 
-      expect(inertia.props[:readings].map { |reading| reading[:can_edit] }).to all(be false)
+      expect(inertia.props[:my_reading]).to be_nil
     end
 
     it "returns 404 for an unknown book" do
