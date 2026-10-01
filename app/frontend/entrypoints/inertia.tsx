@@ -7,6 +7,9 @@ void createInertiaApp({
   // Default persistent layout for every page: header, flash, "+" button and modals
   layout: () => AppLayout,
 
+  // Browser tab title: "<page title> · Reading App", or just the app name when a page sets none
+  title: (title) => (title ? `${title} · Catálogo coletivo` : 'Catálogo coletivo'),
+
   strictMode: true,
 
   defaults: {

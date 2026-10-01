@@ -1,4 +1,4 @@
-import { Link } from '@inertiajs/react'
+import { Head, Link } from '@inertiajs/react'
 import Avatar from '@/components/ui/Avatar'
 import Cover from '@/components/ui/Cover'
 import { RatingDisplay } from '@/components/ui/RatingSquares'
@@ -20,6 +20,7 @@ const formatDate = (date: string) => new Date(`${date}T00:00:00`).toLocaleDateSt
 export default function Show({ user, readings_count, readings }: Props) {
   return (
     <>
+      <Head title="Perfil" />
       <section className="flex items-center gap-4">
         <Avatar name={user.name} size={64} />
         <div>

@@ -1,3 +1,4 @@
+import { Head } from '@inertiajs/react'
 import BookCard from '@/components/BookCard'
 import Pagination from '@/components/Pagination'
 import SearchBar from '@/components/SearchBar'
@@ -15,6 +16,7 @@ export default function Index({ books, filters, pagination }: Props) {
 
   return (
     <>
+      <Head title="Explorar" />
       <h1 className="mb-4 text-2xl">Explorar</h1>
 
       <SearchBar q={filters.q} field={filters.field} />

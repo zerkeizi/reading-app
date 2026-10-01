@@ -1,4 +1,4 @@
-import { Link, router, useForm, usePage } from '@inertiajs/react'
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react'
 import type { FormEvent, MouseEvent } from 'react'
 import { useModal } from '@/components/ModalContext'
 import Button from '@/components/ui/Button'
@@ -14,6 +14,7 @@ type Props = {
 export default function Show({ book, my_reading }: Props) {
   return (
     <article>
+      <Head title={book.title} />
       <BackLink />
 
       <div className="mt-4 flex gap-5">

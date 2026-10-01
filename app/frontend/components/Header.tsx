@@ -13,7 +13,7 @@ export default function Header({ user }: { user: User | null }) {
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 md:px-8">
         <Link href="/" className="flex items-center gap-2 font-heading text-lg">
           <span aria-hidden="true" className="size-7 border-2 border-paper" />
-          Reading App
+          Catálogo coletivo
         </Link>
 
         <div className="hidden md:block">
