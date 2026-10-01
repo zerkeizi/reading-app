@@ -31,13 +31,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
+      # The frontend uses Vite + npm (importmap was removed), so audit the npm
+      # dependencies from package-lock.json instead of `bin/importmap audit`.
+      - name: Set up Node
+        uses: actions/setup-node@v4
         with:
-          bundler-cache: true
+          node-version: 22
+          cache: npm
 
       - name: Scan for security vulnerabilities in JavaScript dependencies
-        run: bin/importmap audit
+        run: npm audit --audit-level=high
 
   lint:
     runs-on: ubuntu-latest
@@ -65,3 +68,49 @@ jobs:
       - name: Lint code for consistent style
         run: bin/rubocop -f github
 
+  test:
+    runs-on: ubuntu-latest
+
+    # Throwaway PostgreSQL container for the test run (same major version as dev).
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: --health-cmd="pg_isready" --health-interval=10s --health-timeout=5s --health-retries=3
+
+    # config/database.yml reads these (same variables docker-compose sets).
+    env:
+      RAILS_ENV: test
+      DB_HOST: localhost
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      # Request specs render Inertia pages, and vite_rails builds the frontend
+      # on demand in the test env (autoBuild), so Node + node_modules are needed.
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install JavaScript dependencies
+        run: npm ci
+
+      - name: Prepare database
+        run: bin/rails db:create db:schema:load
+
+      - name: Run tests
+        run: bundle exec rspec
