@@ -16,49 +16,75 @@
     [ ] double check after inertia.js implementation
     [ ] remove password reset (controller, mailer, views, route, "Forgot password?" link)
     // Later: password reset with letter_opener_web (README: with more time)
-    [ ] sign-up (RegistrationsController, not provided by the generator)
-    [ ] root route -> books#index (login redirects to root_url)
+    [x] sign-up (RegistrationsController, not provided by the generator)
+    [x] root route -> books#index (login redirects to root_url)
+        [x] allow_unauthenticated_access only: :index in BooksController (request spec gets 302)
+        [x] resume_session on the public index, so Current.user is known (header, permissions)
+        [x] routes: resources :books, only: :index (no more /books/index)
         // Decision: define root once Inertia renders the first React page
-[x] Creating Models
+[-] Creating Models
     [x] User
         [x] name column + presence validation
         [x] fixtures with name
         [x] email validations (presence, uniqueness, format)
         [x] has_many :readings / :books through readings
-    [x] Books
+    [-] Books
         // Decision: many-to-many User <-> Book through a readings pivot (1 book, many readers)
         // Decision: books with no readers are still listed on the home page
         // Decision: list sorted by latest reading
         // Decision: sort via books.last_read_at column — 1 cheap write per reading, indexed fast reads
+        // Decision: "editar" = edit your own Reading (read_on, rate, review); book data stays read-only
+        // Decision: external_id to keep openlibrary identification
+        // BigDecimal serializes as a JSON string: cast with .to_f in props/JSON (or attribute :rate, :float)
+        // Decision: rate stays 0.5-5 in 0.5 steps; UI = the design's five squares split in halves (10 options)
         // Later: async job for last_read_at under heavy write load, eventual consistency (README: technical decisions)
-        // Decision: "editar" = edit your own Reading (read_on, score, review); book data stays read-only
-        // Later: read_on / score / review in the React forms, if time allows (README: technical decisions)
+        // Later: read_on / rate / review in the React forms, if time allows (README: technical decisions)
         // Later: active flag / job to hide books with no readers
-        // Decision: external_id (not openlibrary_key) for the OpenLibrary work key, unique
-        // Decision: score as decimal(2,1), 0.5..5 in 0.5 steps (letterboxd-like) — readable 2.5 everywhere
-        // BigDecimal serializes as a JSON string: cast with .to_f in props/JSON (or attribute :score, :float)
-        // score column was created as "rate"
         [x] Book model (title, author, publication_year, genre, external_id unique)
             [x] migration
             [x] associations + validations
             [x] fixtures (books.yml) + model spec
-        [x] Reading model (user, book, read_on, score, review, unique [user_id, book_id])
+        [x] Reading model (user, book, read_on, rate, review, unique [user_id, book_id])
             [x] migration
             [x] validations (uniqueness per user, rate 0.5..5 step 0.5)
             [x] fixtures (readings.yml) + model spec
         [x] books.last_read_at (indexed), set when a Reading is created
             [x] column + index
             [x] after_create_commit callback on Reading
+        [-] book covers
+            // Decision: MVP depends on OpenLibrary for covers — store only cover_id, build the URL
+            // Later: placeholder / Active Storage copy via job / S3 (README: with more time)
+            [x] books.cover_id column (OpenLibrary cover_i)
+            [x] Book#cover_url(size) + model spec
+            [ ] fill cover_id from cover_i when registering a book
+            [ ] placeholder in React for missing / failed covers
 [ ] Routes
-    - Research how they work
-    - how to create new ones
-    - how to see availables
-    - test on insomnia
+    [x] Research how they work
+    [x] how to create new ones
+    [x] test on insomnia // actually, it loads pages from server. No endpoint is exposed
         // Decision: Insomnia only for GET /books.json — HTML/Inertia forms need CSRF token + session cookie
         // Decision: test data via db/seeds.rb (reviewers get it too), rails console for one-offs
-    [ ] db/seeds.rb (users + books + readings)
-    - Authorization/Permissions
-        // Decision: Pundit over CanCanCan — explicit policies, easy to test, permissions as Inertia props
+[-] Data
+    [-] db/seeds.rb (users + books + readings)
+        // 3 users (cecilia@, bruno@, ana@example.com / password), 12 books, 11 readings; re-runnable
+        [x] users, books (3 from 2000), readings (dated, half-star rates, 2 books with no readers)
+        [ ] set cover_id on seeded books
+        [ ] check OpenLibrary external_id / cover_id values (written from memory)
+    [ ] clean dev DB leftovers: VERIFY TMP book (/works/VERIFYTMP), dev@example.com user
+[-] Authorization/Permissions
+    // Decision: Pundit over CanCanCan — explicit policies, easy to test, permissions as Inertia props
+    // ownership rule lives on Reading now: without it, PATCH/DELETE /readings/:id by id = IDOR
+    // Decision: "editar livros" = editing your Reading, Book read-only (README: authorization)
+    [x] pundit gem + generator, include Pundit::Authorization in ApplicationController
+        // pundit_user = Current.user (Rails 8 auth has no current_user); NotAuthorizedError -> redirect 303
+    [x] ReadingPolicy: update? / destroy? only the owner
+    [x] BookPolicy: index? everyone, create? logged in, update? / destroy? false
+    [-] after_action :verify_authorized (fail loudly when an action forgets authorize)
+        [x] BooksController
+        [x] ReadingsController (create by book_id / update / destroy)
+        [ ] OpenLibrary registration: create Book from external_id + Reading (next plan)
+    [ ] permissions as Inertia props (e.g. can_edit: policy(reading).update?)
+    [x] policy specs: owner / other user / guest
 [-] Front
     // Decision: set up Inertia now, before controllers/root route
     [x] install inertia_rails + vite_rails (React + TypeScript)
@@ -72,16 +98,52 @@
     [x] npm install (+ bundle check || bundle install) in bin/docker-dev-entrypoint
         // Decision: install on startup, not a node_modules volume — editor/TS needs node_modules on host
     [ ] README: add "npm install after changing package.json" to useful commands
-    [ ] Testing how views work
-    [ ] Research Inertia.js
     [x] render react page
-    [ ] pages
-        [ ] book index main
-            [ ] filters - author, genre, publication_year
-            [ ] button "Entrar" 
-                [ ] modal ~> sign-in / sign-up
-        [ ] book show [auth]?
-        [ ] user profile [auth]
+    [x] layout (shared by every page)
+        [x] wireframe header: black bar, logo, Entrar / {name} ▾ menu (Perfil, Sair), ☰ on mobile
+        [x] modals per wireframe (2px border, overlay, segmented tabs, Add book at top), first field focused
+        [x] "+" 60x60 bottom-right, signed-in only; UI copy + Rails messages in pt-BR, <html lang="pt-BR">
+        [x] browser tab titles ("Explorar · Reading App") via createInertiaApp title + <Head>
+        // Open: model validation messages are still English ("Name can't be blank") — rails-i18n gem / pt-BR locale?
+        // default persistent layout set once in entrypoints/inertia.tsx (createInertiaApp layout:)
+        [x] header: "Criar conta" / "Entrar" or user name + "Sair"
+        [x] flash messages (notice / alert)
+    [-] books/index — public home
+        [x] book list, sorted by latest reading
+            // order last_read_at DESC NULLS LAST — Postgres puts unread (NULL) books first otherwise
+        [x] pagination
+            // Decision: Kaminari, 9 per page (3x3 grid), links keep q/field
+        [x] filters - author, genre, publication_year (kept in the URL, survive pagination)
+            // Decision: wireframe's joined search+select; the select picks the field (Autor/Gênero/Ano)
+        [x] empty state (no books / no results for filters)
+        [ ] "only mine" filter [auth]
+        [x] Lido / Não lido toggle (reading_id per book; guests get the auth modal)
+        [ ] edit / remove buttons only on my readings (permission props from Pundit)
+    [-] auth
+        // Decision: auth in a modal (AuthModal), errors back via Inertia errors on redirect back
+        // ERB sessions/new kept as fallback for guests opening protected URLs (/profile)
+        [x] sign in tab -> POST /session
+        [x] sign up tab -> POST /registration (RegistrationsController)
+        [ ] replace the ERB fallback login page with a React page
+    [-] books/new [auth] — register a book
+        // "+" button bottom-right: AddBookModal when signed in, AuthModal for guests
+        [x] modal shell: debounced input, idle/searching/no results/unavailable states (fake results)
+        [ ] title search input (debounced) -> Rails -> OpenLibrary
+        [ ] results list, pick one edition
+        [ ] loading / no results / OpenLibrary unavailable states
+        [ ] confirm -> Book (if new) + my Reading
+        [ ] feedback when I've already read it (duplicate)
+    [x] readings/edit [auth] — edit my reading (read_on, rate, review)
+        // on the book page ("Sua leitura"), not a separate page — wireframe 2c
+    [-] remove my reading (confirm first)
+        [x] "Marcar como não lido" on the book page / Lido toggle on the home
+        [ ] confirmation before removing (the wireframe has none; review/rate are lost)
+    [-] shared
+        [-] TS types for props (Book, Reading, User, pagination)
+        [ ] components: BookCard, Filters, Pagination, RatingStars
+    [x] books/show — /books/:id, public, readings with can_edit from ReadingPolicy
+    [x] profiles/show — /profile, singular resource (own profile only)
+        [x] wireframe 2a: square avatar, "Membro desde", count, rows sorted by read_on (NULLS LAST)
 
 [-] README
     [x] skeleton with all required sections
