@@ -2,3 +2,47 @@
 
 @plugin '@tailwindcss/typography';
 @plugin '@tailwindcss/forms';
+
+/*
+  Design tokens (wireframe phase): black, grays and white, Arial Black headings, Arial body, no rounded
+  corners. Components only use these token classes (bg-ink, text-muted, font-heading...), so the final
+  visual style can be swapped here.
+*/
+@theme {
+  --color-ink: #1a1a1a;
+  --color-muted: #555;
+  --color-subtle: #888;
+  --color-line: #bbb;
+  --color-placeholder: #ddd;
+  --color-paper: #fff;
+  --color-overlay: rgb(0 0 0 / 0.6);
+
+  --font-heading: "Arial Black", Arial, sans-serif;
+  --font-body: Arial, sans-serif;
+
+  --radius-*: initial;
+}
+
+@layer base {
+  *,
+  ::before,
+  ::after {
+    border-radius: 0;
+  }
+
+  body {
+    font-family: var(--font-body);
+    color: var(--color-ink);
+    background: var(--color-paper);
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-heading);
+  }
+
+  dialog::backdrop {
+    background: var(--color-overlay);
+  }
+}
