@@ -51,26 +51,30 @@
         [x] books.last_read_at (indexed), set when a Reading is created
             [x] column + index
             [x] after_create_commit callback on Reading
-        [-] book covers
+        [x] book covers
             // Decision: MVP depends on OpenLibrary for covers — store only cover_id, build the URL
             // Later: placeholder / Active Storage copy via job / S3 (README: with more time)
             [x] books.cover_id column (OpenLibrary cover_i)
             [x] Book#cover_url(size) + model spec
-            [ ] fill cover_id from cover_i when registering a book
-            [ ] placeholder in React for missing / failed covers
+            [x] fill cover_id from cover_i when registering a book
+            [x] placeholder in React for missing / failed covers
 [ ] Routes
     [x] Research how they work
     [x] how to create new ones
     [x] test on insomnia // actually, it loads pages from server. No endpoint is exposed
         // Decision: Insomnia only for GET /books.json — HTML/Inertia forms need CSRF token + session cookie
         // Decision: test data via db/seeds.rb (reviewers get it too), rails console for one-offs
-[-] Data
-    [-] db/seeds.rb (users + books + readings)
+    [x] GET /books.json — public, same filters/pagination as the home, no user data, 60 req/min
+        // Decision: public because the catalog page is public (README: access level of /books.json)
+[x] Data
+    [x] db/seeds.rb (users + books + readings)
         // 3 users (cecilia@, bruno@, ana@example.com / password), 12 books, 11 readings; re-runnable
         [x] users, books (3 from 2000), readings (dated, half-star rates, 2 books with no readers)
-        [ ] set cover_id on seeded books
-        [ ] check OpenLibrary external_id / cover_id values (written from memory)
-    [ ] clean dev DB leftovers: VERIFY TMP book (/works/VERIFYTMP), dev@example.com user
+        [x] set cover_id on seeded books
+        [x] check OpenLibrary external_id / cover_id values (written from memory)
+            // 5 keys were wrong; verified live 2026-10-01, dev DB rows fixed in place; seeds now update existing rows
+            // Decision: seed genres picked by hand from the import's pt-BR vocabulary (auto rule is odd on classics)
+    [x] clean dev DB leftovers: VERIFY TMP book (/works/VERIFYTMP), dev@example.com user
 [-] Authorization/Permissions
     // Decision: Pundit over CanCanCan — explicit policies, easy to test, permissions as Inertia props
     // ownership rule lives on Reading now: without it, PATCH/DELETE /readings/:id by id = IDOR
@@ -79,10 +83,11 @@
         // pundit_user = Current.user (Rails 8 auth has no current_user); NotAuthorizedError -> redirect 303
     [x] ReadingPolicy: update? / destroy? only the owner
     [x] BookPolicy: index? everyone, create? logged in, update? / destroy? false
-    [-] after_action :verify_authorized (fail loudly when an action forgets authorize)
+    [x] after_action :verify_authorized (fail loudly when an action forgets authorize)
         [x] BooksController
         [x] ReadingsController (create by book_id / update / destroy)
-        [ ] OpenLibrary registration: create Book from external_id + Reading (next plan)
+        [x] OpenLibrary registration: create Book from external_id + Reading (BookImporter)
+        [x] BookSearchesController (authorize Book, :create?)
     [ ] permissions as Inertia props (e.g. can_edit: policy(reading).update?)
     [x] policy specs: owner / other user / guest
 [-] Front
@@ -125,14 +130,17 @@
         [x] sign in tab -> POST /session
         [x] sign up tab -> POST /registration (RegistrationsController)
         [ ] replace the ERB fallback login page with a React page
-    [-] books/new [auth] — register a book
+    [x] books/new [auth] — register a book
         // "+" button bottom-right: AddBookModal when signed in, AuthModal for guests
         [x] modal shell: debounced input, idle/searching/no results/unavailable states (fake results)
-        [ ] title search input (debounced) -> Rails -> OpenLibrary
-        [ ] results list, pick one edition
-        [ ] loading / no results / OpenLibrary unavailable states
-        [ ] confirm -> Book (if new) + my Reading
-        [ ] feedback when I've already read it (duplicate)
+        [x] title search input (debounced) -> Rails -> OpenLibrary
+            // Decision: Faraday client in app/services/open_library, 12h cache, 3s/5s timeouts, 503 when down
+            // Decision: genre = allow-list, most matching subjects wins; author = all authors joined
+        [x] results list, pick one edition
+        [x] loading / no results / OpenLibrary unavailable states
+        [x] confirm -> Book (if new) + my Reading
+            // Decision: browser sends only external_id, server re-fetches (q=key:)
+        [x] feedback when I've already read it (duplicate)
     [x] readings/edit [auth] — edit my reading (read_on, rate, review)
         // on the book page ("Sua leitura"), not a separate page — wireframe 2c
     [-] remove my reading (confirm first)
@@ -147,5 +155,7 @@
 
 [-] README
     [x] skeleton with all required sections
-    [ ] fill TODO sections (3 open decisions, architecture, AI usage, seeds, CI, k8s)
+    [-] fill TODO sections (3 open decisions, architecture, AI usage, seeds, CI, k8s)
+        [x] 3 open decisions (duplicates, OpenLibrary down/empty, /books.json public), test coverage
+        [ ] architecture, AI usage (+ wrong-suggestion example), CI, k8s
 

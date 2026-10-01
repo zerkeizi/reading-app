@@ -8,6 +8,7 @@ A collective catalog of books read
 - PostgreSQL 16
 - React + TypeScript via Inertia.js, Vite, Tailwind CSS
 - RSpec + WebMock
+- Faraday (OpenLibrary HTTP client)
 - Pundit (authorization), Kaminari (pagination)
 - Docker
 
@@ -45,18 +46,36 @@ password:
 docker compose run --rm web bundle exec rspec
 ```
 
-<!-- TODO: coverage notes (what is covered: models, requests, OpenLibrary integration) -->
+What is covered (`spec/`):
+- **Models**: validations, associations, the `filter_by` search scope, `last_read_at` kept in sync, cover URLs.
+- **Policies**: Pundit rules for owner / other user / guest (`BookPolicy`, `ReadingPolicy`).
+- **Requests**: catalog (filters, pagination, read state), `/books.json`, book page, profile, sessions, sign-up, readings (create/update/destroy, ownership), book search endpoint.
+- **OpenLibrary integration** (WebMock, no real HTTP in tests; JSON fixtures in `spec/fixtures/files/openlibrary/`): result mapping, empty results, timeout / 500 / 429 / invalid JSON → unavailable, caching, import by `external_id` (new, existing, unknown, concurrent), 503 from the search endpoint, nothing created when OpenLibrary is down.
 
 ## Technical decisions
 
 ### Duplicate book registration
-<!-- TODO: decision + justification (a many-to-many User <-> Book design via a readings pivot is being considered, not final) -->
+A book is shared, not owned: `books` is the catalog and `readings` is the pivot between users and books (read date, rate, review). A catalog entry is one OpenLibrary **work** (a book across all its editions), identified by `external_id` (`/works/OL893414W`), unique in the model and with a database index.
+
+- **Adding a work that is already in the catalog** only creates your reading; no second `Book` row, and no request to OpenLibrary.
+- **Adding a book you already read** is rejected by the `[user_id, book_id]` uniqueness (validation + index). The add-book search marks those results as "Lido".
+- **Two people adding the same new work at once**: the unique index keeps one row; `BookImporter` rescues `RecordNotUnique` and uses it.
+- The browser sends only the `external_id`. Title, author, year, genre and cover are fetched by the server from OpenLibrary (`q=key:<id>`), so a tampered request can't create fake catalog data.
 
 ### OpenLibrary unavailable or empty responses
-<!-- TODO: behavior on timeouts/errors/empty results + justification -->
+OpenLibrary is only needed to **search and add new books**; the catalog, book pages, profiles, `/books.json` and adding a book that is already in the catalog all work from our own data.
+
+- **Empty result** (HTTP 200, `numFound: 0`) is not an error: the modal shows "Nenhum livro encontrado".
+- **Unavailable** (timeouts of 3s to connect / 5s to answer, connection errors, 5xx, 429/403, invalid JSON) becomes one `OpenLibrary::Unavailable` error. The search endpoint answers **503** with a message ("A busca do OpenLibrary está indisponível…"), shown in the modal instead of an empty list; adding a new book redirects back with an alert and creates nothing.
+- **Load on OpenLibrary**: it allows 1–3 requests/s per app. The client sends a `User-Agent` identifying the app, searches are **cached for 12h** by normalized title (failures are never cached), the modal debounces typing (200 ms, 2+ characters, stale requests aborted) and the endpoint is rate-limited per user (30/min).
+- Covers are loaded straight from OpenLibrary's cover server; while it's down the UI shows placeholders (see "With more time").
 
 ### Access level of `/books.json`
-<!-- TODO: who can access the endpoint + justification -->
+**Public**, because it is the same data the public home page already shows ("qualquer pessoa que acessa a home encontra a lista"): same filters (`q`, `field`), order and pagination (`page`, 9 per page), plus `external_id` and `last_read_at`. It is read-only and has **no user data** (no `reading_id`, even when signed in). Rate-limited to 60 requests/min per client, only for the JSON format.
+
+```sh
+curl "http://localhost:3000/books.json?q=tolkien&field=author"
+```
 
 ### Local Docker setup
 Development uses a separate `Dockerfile.dev` and `docker-compose.yml`: the source is bind-mounted, gems live in a named volume, the container runs as a non-root user (UID 1000), and Node is included for Vite. The Rails-generated `Dockerfile` is kept untouched as the production image.
@@ -83,6 +102,11 @@ The challenge asks that only the author can edit or remove a book. Here a book i
 ### Rating (not asked)
 
 A reading's rate goes from 0.5 to 5 in half steps (Letterboxd-like), stored as `decimal(2,1)`. The design shows five square buttons; each square is split into two clickable halves, so the five squares cover all ten values and a half value shows as a half-filled square. Props cast the rate with `to_f`, because Rails serializes `BigDecimal` as a JSON string.
+
+### OpenLibrary data mapping
+- `external_id` ← `key` (the work key), `title` ← `title`, `publication_year` ← `first_publish_year`, `cover_id` ← `cover_i`.
+- `author` ← **all** `author_name` entries joined ("Neil Gaiman, Terry Pratchett"), so the author filter finds the book by any of them.
+- `genre` ← OpenLibrary's `subject` list is noisy (places, awards, `nyt:` lists). An allow-list maps subjects to Portuguese genres, and **the genre matched by the most subjects wins** (ties go to the more specific genre): The Hobbit has 14 fantasy subjects and one stray "science fiction", so it's "Fantasia"; Dune is "Ficção científica". Plain "Fiction" is a fallback ("Ficção"); no match → no genre.
 
 ### Catalog search, filters and pagination
 
