@@ -2,7 +2,7 @@ dune:
   title: Dune
   author: Frank Herbert
   publication_year: 1965
-  genre: Science Fiction
+  genre: Ficção científica
   external_id: /works/OL893414W
   cover_id: 11481354
   last_read_at: <%= 1.day.ago %>

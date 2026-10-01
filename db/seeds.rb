@@ -14,22 +14,27 @@ users = [
   [ attrs[:email_address].split("@").first.to_sym, user ]
 end
 
+# external_id and cover_id checked against OpenLibrary's search API (2026-10-01). Genres use the same
+# Portuguese names the OpenLibrary import produces (OpenLibrary::Genre), picked by hand for the demo.
 books = [
-  { key: :dune, title: "Dune", author: "Frank Herbert", publication_year: 1965, genre: "Science Fiction", external_id: "/works/OL893414W" },
-  { key: :hobbit, title: "The Hobbit", author: "J.R.R. Tolkien", publication_year: 1937, genre: "Fantasy", external_id: "/works/OL262758W" },
-  { key: :nineteen_eighty_four, title: "Nineteen Eighty-Four", author: "George Orwell", publication_year: 1949, genre: "Dystopian", external_id: "/works/OL1168083W" },
-  { key: :pride, title: "Pride and Prejudice", author: "Jane Austen", publication_year: 1813, genre: "Romance", external_id: "/works/OL66554W" },
-  { key: :solitude, title: "One Hundred Years of Solitude", author: "Gabriel García Márquez", publication_year: 1967, genre: "Magical Realism", external_id: "/works/OL274505W" },
-  { key: :gatsby, title: "The Great Gatsby", author: "F. Scott Fitzgerald", publication_year: 1925, genre: "Classic", external_id: "/works/OL468431W" },
-  { key: :brave_new_world, title: "Brave New World", author: "Aldous Huxley", publication_year: 1932, genre: "Dystopian", external_id: "/works/OL64468W" },
-  { key: :mockingbird, title: "To Kill a Mockingbird", author: "Harper Lee", publication_year: 1960, genre: "Classic", external_id: "/works/OL3140822W" },
-  { key: :white_teeth, title: "White Teeth", author: "Zadie Smith", publication_year: 2000, genre: "Literary Fiction", external_id: "/works/OL1966503W" },
-  { key: :blind_assassin, title: "The Blind Assassin", author: "Margaret Atwood", publication_year: 2000, genre: "Literary Fiction", external_id: "/works/OL675140W" },
-  { key: :lotr, title: "The Lord of the Rings", author: "J.R.R. Tolkien", publication_year: 1954, genre: "Fantasy", external_id: "/works/OL27448W" },
-  { key: :goblet_of_fire, title: "Harry Potter and the Goblet of Fire", author: "J.K. Rowling", publication_year: 2000, genre: "Fantasy", external_id: "/works/OL82586W" }
+  { key: :dune, title: "Dune", author: "Frank Herbert", publication_year: 1965, genre: "Ficção científica", external_id: "/works/OL893414W", cover_id: 11481354 },
+  { key: :hobbit, title: "The Hobbit", author: "J.R.R. Tolkien", publication_year: 1937, genre: "Fantasia", external_id: "/works/OL27482W", cover_id: 14627509 },
+  { key: :nineteen_eighty_four, title: "Nineteen Eighty-Four", author: "George Orwell", publication_year: 1949, genre: "Distopia", external_id: "/works/OL1168083W", cover_id: 9267242 },
+  { key: :pride, title: "Pride and Prejudice", author: "Jane Austen", publication_year: 1813, genre: "Romance", external_id: "/works/OL66554W", cover_id: 14348537 },
+  { key: :solitude, title: "One Hundred Years of Solitude", author: "Gabriel García Márquez", publication_year: 1967, genre: "Ficção", external_id: "/works/OL274505W", cover_id: 12627383 },
+  { key: :gatsby, title: "The Great Gatsby", author: "F. Scott Fitzgerald", publication_year: 1925, genre: "Clássico", external_id: "/works/OL468431W", cover_id: 10590366 },
+  { key: :brave_new_world, title: "Brave New World", author: "Aldous Huxley", publication_year: 1932, genre: "Distopia", external_id: "/works/OL64365W", cover_id: 8231823 },
+  { key: :mockingbird, title: "To Kill a Mockingbird", author: "Harper Lee", publication_year: 1960, genre: "Clássico", external_id: "/works/OL3140822W", cover_id: 14351077 },
+  { key: :white_teeth, title: "White Teeth", author: "Zadie Smith", publication_year: 2000, genre: "Ficção", external_id: "/works/OL481143W", cover_id: 5276331 },
+  { key: :blind_assassin, title: "The Blind Assassin", author: "Margaret Atwood", publication_year: 2000, genre: "Ficção", external_id: "/works/OL675698W", cover_id: 11041760 },
+  { key: :lotr, title: "The Lord of the Rings", author: "J.R.R. Tolkien", publication_year: 1954, genre: "Fantasia", external_id: "/works/OL27448W", cover_id: 14625765 },
+  { key: :goblet_of_fire, title: "Harry Potter and the Goblet of Fire", author: "J.K. Rowling", publication_year: 2000, genre: "Fantasia", external_id: "/works/OL82560W", cover_id: 12059372 }
 ].to_h do |attrs|
   key = attrs.delete(:key)
-  [ key, Book.find_or_create_by!(external_id: attrs[:external_id]) { |b| b.assign_attributes(attrs) } ]
+  # Updates existing rows too, so re-running the seeds refreshes covers and genres
+  book = Book.find_or_initialize_by(external_id: attrs[:external_id])
+  book.update!(attrs.except(:external_id))
+  [ key, book ]
 end
 
 # [user, book, days ago, rate, review]. Different dates give the list a visible "latest reading" order.
