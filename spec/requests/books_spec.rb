@@ -32,6 +32,48 @@ RSpec.describe "Books", type: :request do
     end
   end
 
+  describe "GET / with filters and pages" do
+    before do
+      10.times { |n| Book.create!(title: "Book #{n}", author: "Agatha #{n}", external_id: "/works/OLAGATHA#{n}") }
+    end
+
+    it "filters by the chosen field and echoes the filters back" do
+      get root_path, params: { q: "agatha", field: "author" }
+
+      expect(inertia.props[:filters]).to eq("q" => "agatha", "field" => "author")
+      expect(inertia.props[:pagination][:total_count]).to eq(10)
+      expect(inertia.props[:books].map { |book| book["author"] }).to all(start_with("Agatha"))
+    end
+
+    it "falls back to the author field for an unknown field" do
+      get root_path, params: { q: "x", field: "password_digest" }
+
+      expect(inertia.props[:filters][:field]).to eq("author")
+    end
+
+    it "shows 9 books per page" do
+      get root_path, params: { page: 2 }
+
+      expect(inertia.props[:books].size).to eq(Book.count - 9)
+      expect(inertia.props[:pagination]).to eq("page" => 2, "total_pages" => 2, "total_count" => Book.count)
+    end
+
+    it "tells which books the signed-in user has read" do
+      sign_in users(:one)
+      get root_path
+
+      read = inertia.props[:books].select { |book| book[:reading_id] }
+      expect(read.map { |book| book["id"] }).to eq([ books(:dune).id ])
+      expect(read.first[:reading_id]).to eq(readings(:one_dune).id)
+    end
+
+    it "marks nothing as read for guests" do
+      get root_path
+
+      expect(inertia.props[:books].map { |book| book[:reading_id] }).to all(be_nil)
+    end
+  end
+
   describe "GET /books" do
     it "renders the same catalog" do
       get books_path
