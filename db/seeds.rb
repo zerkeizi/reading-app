@@ -15,7 +15,7 @@ users = [
 end
 
 books = [
-  { key: :dune, title: "Dune", author: "Frank Herbert", publication_year: 1965, genre: "Science Fiction", external_id: "/works/OL893415W" },
+  { key: :dune, title: "Dune", author: "Frank Herbert", publication_year: 1965, genre: "Science Fiction", external_id: "/works/OL893414W" },
   { key: :hobbit, title: "The Hobbit", author: "J.R.R. Tolkien", publication_year: 1937, genre: "Fantasy", external_id: "/works/OL262758W" },
   { key: :nineteen_eighty_four, title: "Nineteen Eighty-Four", author: "George Orwell", publication_year: 1949, genre: "Dystopian", external_id: "/works/OL1168083W" },
   { key: :pride, title: "Pride and Prejudice", author: "Jane Austen", publication_year: 1813, genre: "Romance", external_id: "/works/OL66554W" },
