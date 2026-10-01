@@ -33,5 +33,6 @@
 # Ignore key files for decrypting credentials and more.
 /config/*.key
 
-# Ignore JavaScript packages
+# Ignore JavaScript packages and build files
 /node_modules/
+/public/vite*
