@@ -18,6 +18,7 @@
     // Later: password reset with letter_opener_web (README: with more time)
     [ ] sign-up (RegistrationsController, not provided by the generator)
     [ ] root route -> books#index (login redirects to root_url)
+        // Decision: define root once Inertia renders the first React page
 [x] Creating Models
     [x] User
         [x] name column + presence validation
@@ -53,12 +54,27 @@
     - how to create new ones
     - how to see availables
     - test on insomnia
+        // Decision: Insomnia only for GET /books.json — HTML/Inertia forms need CSRF token + session cookie
+        // Decision: test data via db/seeds.rb (reviewers get it too), rails console for one-offs
+    [ ] db/seeds.rb (users + books + readings)
     - Authorization/Permissions
         // Decision: Pundit over CanCanCan — explicit policies, easy to test, permissions as Inertia props
-[ ] Front
+[-] Front
+    // Decision: set up Inertia now, before controllers/root route
+    [x] install inertia_rails + vite_rails (React + TypeScript)
+        // installer didn't add devDependencies: added vite-plugin-ruby, tailwind (+forms, typography),
+        // typescript, @types/react, @types/react-dom by hand
+        [ ] clean up layout: leftover application.js tag, propshaft stylesheet tag
+        // Later: remove importmap/turbo/stimulus once React pages replace the ERB ones
+        [ ] replace inertia_example (controller, page, route, root) with the real books page
+    [x] vite dev server in docker-compose
+        // Decision: separate vite service; Rails proxies assets (skipProxy false), browser only hits :3000
+    [x] npm install (+ bundle check || bundle install) in bin/docker-dev-entrypoint
+        // Decision: install on startup, not a node_modules volume — editor/TS needs node_modules on host
+    [ ] README: add "npm install after changing package.json" to useful commands
     [ ] Testing how views work
     [ ] Research Inertia.js
-    [ ] render react page
+    [x] render react page
     [ ] pages
         [ ] book index main
             [ ] filters - author, genre, publication_year
