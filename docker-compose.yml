@@ -23,6 +23,8 @@ services:
       DB_HOST: db
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
+      # Rails reaches the Vite dev server through the compose network
+      VITE_RUBY_HOST: vite
     volumes:
       - .:/rails
       - bundle:/usr/local/bundle
@@ -34,6 +36,20 @@ services:
     # Allow attaching to the container for `debugger` breakpoints
     stdin_open: true
     tty: true
+
+  vite:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    command: bin/vite dev
+    environment:
+      # Listen on all interfaces so Rails and the browser (HMR websocket) can connect
+      VITE_RUBY_HOST: 0.0.0.0
+    volumes:
+      - .:/rails
+      - bundle:/usr/local/bundle
+    ports:
+      - "3036:3036"
 
 volumes:
   postgres_data:

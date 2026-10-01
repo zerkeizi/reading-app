@@ -1,10 +1,20 @@
 #!/bin/bash -e
 
-# Remove a stale pid file left behind when the container was stopped abruptly
-rm -f /rails/tmp/pids/server.pid
+# Install gems and node packages when they are missing or out of date.
+# web and vite share the same volumes, so a lock keeps them from installing at the same time.
+(
+  flock 9
+  bundle check > /dev/null || bundle install
+  if [ ! -f node_modules/.package-lock.json ] ||
+     [ package.json -nt node_modules/.package-lock.json ] ||
+     [ package-lock.json -nt node_modules/.package-lock.json ]; then
+    npm install --no-audit --no-fund
+  fi
+) 9> /rails/tmp/deps.lock
 
-# If running the rails server then create or migrate existing database
+# If running the rails server then remove a stale pid file and create or migrate the database
 if [[ " $* " == *" server "* ]]; then
+  rm -f /rails/tmp/pids/server.pid
   ./bin/rails db:prepare
 fi
 
