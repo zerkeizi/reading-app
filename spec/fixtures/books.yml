@@ -1,0 +1,7 @@
+dune:
+  title: Dune
+  author: Frank Herbert
+  publication_year: 1965
+  genre: Science Fiction
+  external_id: /works/OL893415W
+  last_read_at: <%= 1.day.ago %>

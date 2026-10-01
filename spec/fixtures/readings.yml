@@ -1,0 +1,4 @@
+one_dune:
+  user: one        # refers to users.yml → one
+  book: dune
+  rate: 4.5

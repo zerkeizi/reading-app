@@ -1,0 +1,73 @@
+[x] Setup
+    [x] Rails 8.1 / Ruby 3.3.9
+    [x] Dockerfile.dev
+    [x] docker-compose.yml
+[ ] RSpec tests
+    /* According to Claude, if we set up tests before,
+    rail's generation commands create spec files automatically in the future */
+    // Decision: RSpec + Rails fixtures + WebMock only — simplest setup for 2-3 models
+    // Later: factory_bot / shoulda-matchers / faker if the suite grows (README: testing section)
+    // Open: generators config in config/application.rb is commented out, README says it's active
+    [x] initial tests
+    [ ] double check after all models controllers and services are done.
+[x] Authentication
+    // automatically generates User model
+    // Decision: Rails 8 auth generator over Devise — own controllers, easy to render Inertia pages
+    [ ] double check after inertia.js implementation
+    [ ] remove password reset (controller, mailer, views, route, "Forgot password?" link)
+    // Later: password reset with letter_opener_web (README: with more time)
+    [ ] sign-up (RegistrationsController, not provided by the generator)
+    [ ] root route -> books#index (login redirects to root_url)
+[x] Creating Models
+    [x] User
+        [x] name column + presence validation
+        [x] fixtures with name
+        [x] email validations (presence, uniqueness, format)
+        [x] has_many :readings / :books through readings
+    [x] Books
+        // Decision: many-to-many User <-> Book through a readings pivot (1 book, many readers)
+        // Decision: books with no readers are still listed on the home page
+        // Decision: list sorted by latest reading
+        // Decision: sort via books.last_read_at column — 1 cheap write per reading, indexed fast reads
+        // Later: async job for last_read_at under heavy write load, eventual consistency (README: technical decisions)
+        // Decision: "editar" = edit your own Reading (read_on, score, review); book data stays read-only
+        // Later: read_on / score / review in the React forms, if time allows (README: technical decisions)
+        // Later: active flag / job to hide books with no readers
+        // Decision: external_id (not openlibrary_key) for the OpenLibrary work key, unique
+        // Decision: score as decimal(2,1), 0.5..5 in 0.5 steps (letterboxd-like) — readable 2.5 everywhere
+        // BigDecimal serializes as a JSON string: cast with .to_f in props/JSON (or attribute :score, :float)
+        // score column was created as "rate"
+        [x] Book model (title, author, publication_year, genre, external_id unique)
+            [x] migration
+            [x] associations + validations
+            [x] fixtures (books.yml) + model spec
+        [x] Reading model (user, book, read_on, score, review, unique [user_id, book_id])
+            [x] migration
+            [x] validations (uniqueness per user, rate 0.5..5 step 0.5)
+            [x] fixtures (readings.yml) + model spec
+        [x] books.last_read_at (indexed), set when a Reading is created
+            [x] column + index
+            [x] after_create_commit callback on Reading
+[ ] Routes
+    - Research how they work
+    - how to create new ones
+    - how to see availables
+    - test on insomnia
+    - Authorization/Permissions
+        // Decision: Pundit over CanCanCan — explicit policies, easy to test, permissions as Inertia props
+[ ] Front
+    [ ] Testing how views work
+    [ ] Research Inertia.js
+    [ ] render react page
+    [ ] pages
+        [ ] book index main
+            [ ] filters - author, genre, publication_year
+            [ ] button "Entrar" 
+                [ ] modal ~> sign-in / sign-up
+        [ ] book show [auth]?
+        [ ] user profile [auth]
+
+[-] README
+    [x] skeleton with all required sections
+    [ ] fill TODO sections (3 open decisions, architecture, AI usage, seeds, CI, k8s)
+
