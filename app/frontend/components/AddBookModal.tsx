@@ -1,3 +1,4 @@
+import { router } from '@inertiajs/react'
 import { useEffect, useState } from 'react'
 import Modal from './Modal'
 import { useModal } from './ModalContext'
@@ -10,22 +11,39 @@ export type SearchResult = {
   author: string | null
   publication_year: number | null
   cover_url: string | null
+  // The signed-in user already has a reading of this work
+  read: boolean
 }
 
 type Status = 'idle' | 'searching' | 'done' | 'unavailable'
 
 const MIN_CHARS = 2
 const DEBOUNCE_MS = 200
-const MAX_RESULTS = 8
+const UNAVAILABLE_MESSAGE = 'A busca está indisponível no momento. Tente novamente mais tarde.'
 
-// TODO: replace with fetch(`/book_searches?q=${query}`) once the OpenLibrary backend exists
-async function searchBooks(query: string): Promise<SearchResult[]> {
-  const fake: SearchResult[] = [
-    { external_id: '/works/OL893414W', title: 'Dune', author: 'Frank Herbert', publication_year: 1965, cover_url: null },
-    { external_id: '/works/OL20893680W', title: 'Dungeon Crawler Carl', author: 'Matt Dinniman', publication_year: 2020, cover_url: null },
-    { external_id: '/works/OL27448W', title: 'The Lord of the Rings', author: 'J.R.R. Tolkien', publication_year: 1954, cover_url: null },
-  ]
-  return fake.filter((book) => book.title.toLowerCase().includes(query.toLowerCase())).slice(0, MAX_RESULTS)
+class SearchError extends Error {}
+
+// The backend queries OpenLibrary (BookSearchesController); the browser never calls it directly
+async function searchBooks(query: string, signal: AbortSignal): Promise<SearchResult[]> {
+  let response: Response
+  try {
+    response = await fetch(`/book_searches?q=${encodeURIComponent(query)}`, {
+      headers: { Accept: 'application/json' },
+      // A guest/expired session is redirected to the login page: stop there instead of parsing its HTML
+      redirect: 'manual',
+      signal,
+    })
+  } catch (error) {
+    if (signal.aborted) throw error
+    throw new SearchError(UNAVAILABLE_MESSAGE)
+  }
+
+  if (response.type === 'opaqueredirect') throw new SearchError('Sua sessão expirou. Entre novamente para buscar.')
+
+  const body = await response.json().catch(() => null)
+  if (!response.ok || !body) throw new SearchError(body?.error ?? UNAVAILABLE_MESSAGE)
+
+  return body.results
 }
 
 export default function AddBookModal() {
@@ -33,6 +51,9 @@ export default function AddBookModal() {
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState<Status>('idle')
   const [results, setResults] = useState<SearchResult[]>([])
+  const [error, setError] = useState('')
+  const [adding, setAdding] = useState<string | null>(null)
+  const [addError, setAddError] = useState('')
 
   useEffect(() => {
     if (query.trim().length < MIN_CHARS) {
@@ -41,26 +62,36 @@ export default function AddBookModal() {
       return
     }
 
-    let cancelled = false
+    const controller = new AbortController()
     const timer = setTimeout(async () => {
       setStatus('searching')
       try {
-        const books = await searchBooks(query.trim())
-        if (!cancelled) {
-          setResults(books)
-          setStatus('done')
-        }
-      } catch {
-        if (!cancelled) setStatus('unavailable')
+        setResults(await searchBooks(query.trim(), controller.signal))
+        setStatus('done')
+      } catch (err) {
+        if (controller.signal.aborted) return
+        setError(err instanceof SearchError ? err.message : UNAVAILABLE_MESSAGE)
+        setStatus('unavailable')
       }
     }, DEBOUNCE_MS)
 
-    // Typing again before the delay cancels the pending search
+    // Typing again cancels the pending search and aborts the request still in flight
     return () => {
-      cancelled = true
       clearTimeout(timer)
+      controller.abort()
     }
   }, [query])
+
+  // Only the work key goes to the server: it imports the book's data from OpenLibrary itself
+  const add = (book: SearchResult) => {
+    setAddError('')
+    router.post('/readings', { external_id: book.external_id }, {
+      onStart: () => setAdding(book.external_id),
+      onFinish: () => setAdding(null),
+      onSuccess: closeModal,
+      onError: () => setAddError('Não foi possível adicionar este livro. Talvez você já o tenha lido.'),
+    })
+  }
 
   return (
     <Modal title="Adicionar livro" onClose={closeModal} position="top">
@@ -77,11 +108,12 @@ export default function AddBookModal() {
       <div className="mt-3 text-sm text-muted" aria-live="polite">
         {status === 'idle' && `Digite pelo menos ${MIN_CHARS} letras para buscar.`}
         {status === 'searching' && 'Buscando…'}
-        {status === 'unavailable' && <span role="alert">A busca está indisponível no momento. Tente novamente mais tarde.</span>}
+        {status === 'unavailable' && <span role="alert">{error}</span>}
         {status === 'done' && (results.length === 0
           ? 'Nenhum livro encontrado.'
           : `${results.length} ${results.length === 1 ? 'sugestão' : 'sugestões'}`)}
       </div>
+      {addError && <p role="alert" className="mt-2 text-sm font-bold">{addError}</p>}
 
       {status === 'done' && results.length > 0 && (
         <ul className="mt-2">
@@ -94,8 +126,14 @@ export default function AddBookModal() {
                   {[book.author ?? 'Autor desconhecido', book.publication_year].filter(Boolean).join(' · ')}
                 </p>
               </div>
-              {/* TODO: router.post('/readings', { external_id }) once the OpenLibrary backend exists */}
-              <Button variant="secondary" disabled className="shrink-0 px-2 py-1 text-xs">+ Adicionar leitura</Button>
+              {book.read ? (
+                <Button disabled className="shrink-0 px-2 py-1 text-xs">Lido</Button>
+              ) : (
+                <Button variant="secondary" disabled={adding !== null} onClick={() => add(book)}
+                  className="shrink-0 px-2 py-1 text-xs">
+                  {adding === book.external_id ? 'Adicionando…' : '+ Adicionar leitura'}
+                </Button>
+              )}
             </li>
           ))}
         </ul>

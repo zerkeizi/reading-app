@@ -13,15 +13,18 @@ type Props = {
 export default function Cover({ url, title, width, height, className = '' }: Props) {
   const [failed, setFailed] = useState(false)
   const style = width && height ? { width, height } : undefined
+  // Thumbnails are too small for readable text: keep the title only in aria-label
+  const showTitle = !width || width >= 60
 
   if (!url || failed) {
     return (
       <div
+        role="img"
         style={style}
-        className={`flex shrink-0 items-center justify-center bg-placeholder p-2 text-center text-xs text-subtle ${className}`}
+        className={`flex shrink-0 items-center justify-center overflow-hidden bg-placeholder p-2 text-center text-xs break-words text-subtle ${className}`}
         aria-label={`Sem capa: ${title}`}
       >
-        {title}
+        {showTitle && title}
       </div>
     )
   }
