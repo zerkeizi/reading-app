@@ -6,6 +6,7 @@ Rails.application.routes.draw do
   root "books#index"
   resources :books, only: %i[index show]
   resource :profile, only: :show
+  resources :readings, only: %i[create update destroy]
   resource :session
   resource :registration, only: :create
   resources :passwords, param: :token
