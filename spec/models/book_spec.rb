@@ -43,4 +43,24 @@ RSpec.describe Book, type: :model do
       expect { book.destroy }.to change(Reading, :count).by(-1)
     end
   end
+
+  describe "#cover_url" do
+    it "builds the OpenLibrary cover URL in medium size by default" do
+      expect(book.cover_url).to eq("https://covers.openlibrary.org/b/id/#{book.cover_id}-M.jpg")
+    end
+
+    it "accepts the S and L sizes" do
+      expect(book.cover_url("S")).to end_with("-S.jpg")
+      expect(book.cover_url("L")).to end_with("-L.jpg")
+    end
+
+    it "is nil when the book has no cover" do
+      book.cover_id = nil
+      expect(book.cover_url).to be_nil
+    end
+
+    it "rejects an unknown size" do
+      expect { book.cover_url("XL") }.to raise_error(ArgumentError)
+    end
+  end
 end

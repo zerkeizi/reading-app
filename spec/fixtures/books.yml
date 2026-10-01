@@ -4,4 +4,5 @@ dune:
   publication_year: 1965
   genre: Science Fiction
   external_id: /works/OL893415W
+  cover_id: 11481354
   last_read_at: <%= 1.day.ago %>
