@@ -26,7 +26,7 @@ export default function ReadToggle({ bookId, readingId }: Props) {
 
   return (
     <Button variant={read ? 'primary' : 'secondary'} aria-pressed={read} disabled={processing} onClick={toggle}
-      className="min-w-24 px-3 py-1">
+      className="min-w-24 px-3 py-1 lg:w-full ">
       {read ? 'Lido' : 'Não lido'}
     </Button>
   )

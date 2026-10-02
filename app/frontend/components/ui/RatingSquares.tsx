@@ -16,8 +16,8 @@ const fillFor = (square: number, rate: number | null): Fill => {
 }
 
 const FILL_STYLE: Record<Fill, string> = {
-  full: 'var(--color-ink)',
-  half: 'linear-gradient(to right, var(--color-ink) 50%, var(--color-paper) 50%)',
+  full: 'var(--color-accent)',
+  half: 'linear-gradient(to right, var(--color-accent) 50%, var(--color-paper) 50%)',
   empty: 'var(--color-paper)',
 }
 
@@ -75,7 +75,7 @@ export function RatingInput({ value, onChange }: InputProps) {
               aria-label={`${formatRate(option)} de 5`}
               tabIndex={option === focusable ? 0 : -1}
               onClick={() => onChange(value === option ? null : option)}
-              className="h-full w-1/2 bg-transparent hover:bg-subtle/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+              className="h-full w-1/2 bg-transparent hover:bg-ink/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
             />
           ))}
         </div>

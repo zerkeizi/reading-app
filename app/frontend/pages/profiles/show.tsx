@@ -32,7 +32,7 @@ export default function Show({ user, readings_count, readings }: Props) {
       <section className="mt-8">
         <div className="mb-4 flex items-baseline justify-between border-b-2 border-ink pb-2">
           <h2 className="text-lg">Livros lidos</h2>
-          <span className="text-sm text-muted">{readings_count} {readings_count === 1 ? 'livro' : 'livros'}</span>
+          <span className="text-sm text-subtle">{readings_count} {readings_count === 1 ? 'livro' : 'livros'}</span>
         </div>
 
         {readings.length === 0 ? (
@@ -40,13 +40,13 @@ export default function Show({ user, readings_count, readings }: Props) {
         ) : (
           <ul>
             {readings.map((reading) => (
-              <li key={reading.id} className="border-b border-dashed border-line py-4 last:border-0">
+              <li key={reading.id} className="border-b border-line py-4 last:border-0">
                 <Link href={`/books/${reading.book.id}`} className="flex gap-4 hover:bg-placeholder/40">
                   <Cover url={reading.book.cover_url} title={reading.book.title} width={54} height={81} />
                   <div className="flex min-w-0 flex-col gap-1">
                     <span className="font-heading leading-tight">{reading.book.title}</span>
-                    {reading.book.author && <span className="text-sm">{reading.book.author}</span>}
-                    {reading.read_on && <span className="text-sm text-muted">Lido em {formatDate(reading.read_on)}</span>}
+                    {reading.book.author && <span className="text-sm text-muted">{reading.book.author}</span>}
+                    {reading.read_on && <span className="text-[13px] text-subtle">Lido em {formatDate(reading.read_on)}</span>}
                     <RatingDisplay rate={reading.rate} />
                   </div>
                 </Link>

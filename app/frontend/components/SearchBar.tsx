@@ -1,6 +1,7 @@
 import { router } from '@inertiajs/react'
 import { useEffect, useState } from 'react'
 import type { FilterField } from '@/types'
+import Select from './ui/Select'
 
 const FIELDS: { value: FilterField; label: string }[] = [
   { value: 'author', label: 'Autor' },
@@ -38,7 +39,7 @@ export default function SearchBar({ q, field }: Props) {
   }, [query, currentField, q, field])
 
   return (
-    <div className="flex border-2 border-ink">
+    <div className="flex h-[46px] border-2 border-ink md:h-[50px]">
       <input
         type="search"
         aria-label="Buscar livros"
@@ -46,18 +47,10 @@ export default function SearchBar({ q, field }: Props) {
         inputMode={currentField === 'year' ? 'numeric' : 'search'}
         value={query}
         onChange={(event) => setQuery(event.target.value)}
-        className="min-w-0 flex-1 border-0 px-3 py-2 focus:ring-0"
+        className="min-w-0 flex-1 border-0 bg-transparent px-3 text-base placeholder:text-avatar focus:ring-0 md:px-4 md:text-[17px]"
       />
-      <select
-        aria-label="Buscar por"
-        value={currentField}
-        onChange={(event) => setCurrentField(event.target.value as FilterField)}
-        className="border-0 border-l-2 border-ink bg-placeholder py-2 pr-8 pl-3 font-bold focus:ring-0"
-      >
-        {FIELDS.map(({ value, label }) => (
-          <option key={value} value={value}>{label}</option>
-        ))}
-      </select>
+      <Select label="Buscar por" value={currentField} options={FIELDS} onChange={setCurrentField}
+        className="border-l-2 border-ink" />
     </div>
   )
 }

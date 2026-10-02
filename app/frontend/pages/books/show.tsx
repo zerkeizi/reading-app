@@ -20,14 +20,14 @@ export default function Show({ book, my_reading }: Props) {
       <div className="mt-4 flex gap-5">
         <Cover url={book.cover_url} title={book.title} width={110} height={165} />
         <div className="flex min-w-0 flex-col gap-1">
-          <h1 className="text-xl leading-tight md:text-2xl">{book.title}</h1>
-          {book.author && <p>{book.author}</p>}
-          {book.publication_year && <p className="text-sm text-muted">{book.publication_year}</p>}
+          <h1 className="text-lg leading-tight md:text-2xl">{book.title}</h1>
+          {book.author && <p className="text-sm text-muted">{book.author}</p>}
+          {book.publication_year && <p className="text-[13px] text-subtle">{book.publication_year}</p>}
           {book.genre && (
-            <p><span className="inline-block border border-line px-2 py-0.5 text-xs text-muted">{book.genre}</span></p>
+            <p><span className="inline-block border border-ink px-2 py-0.5 text-xs">{book.genre}</span></p>
           )}
           {my_reading && (
-            <p className="mt-2"><span className="inline-block bg-ink px-2 py-0.5 text-xs font-bold text-paper">Lido</span></p>
+            <p className="mt-1.5"><span className="inline-block border-2 border-ink bg-accent px-2.5 py-0.5 text-[13px] font-bold">Lido</span></p>
           )}
         </div>
       </div>
@@ -46,7 +46,7 @@ function BackLink() {
     }
   }
 
-  return <Link href="/" onClick={goBack} className="text-sm font-bold hover:underline">‹ Voltar</Link>
+  return <Link href="/" onClick={goBack} className="text-sm text-muted hover:underline">‹ Voltar</Link>
 }
 
 // Not read yet: one full-width primary action. Guests are asked to sign in first.
@@ -72,20 +72,21 @@ function YourReading({ reading }: { reading: Reading }) {
 
   const save = (event: FormEvent) => {
     event.preventDefault()
-    form.patch(`/readings/${reading.id}`, { preserveScroll: true })
+    // Success redirects to the profile (start at its top); on validation errors stay where the form is
+    form.patch(`/readings/${reading.id}`, { preserveScroll: 'errors' })
   }
 
   const markNotRead = () => router.delete(`/readings/${reading.id}`, { preserveScroll: true })
 
   return (
-    <section className="mt-8 border-t border-dashed border-line pt-6">
-      <h2 className="mb-4 text-lg">Sua leitura</h2>
+    <section className="mt-6 border-t-2 border-ink pt-4">
+      <h2 className="mb-4 text-[15px]">Sua leitura</h2>
 
       <form onSubmit={save} className="flex flex-col gap-5">
         <label className="flex flex-col gap-1">
           <span className="text-sm font-bold">Lido em</span>
           <input type="date" value={form.data.read_on} onChange={(e) => form.setData('read_on', e.target.value)}
-            className="w-48 border-2 border-ink" />
+            className="h-[46px] w-48 border-2 border-ink" />
           {form.errors.read_on && <span role="alert" className="text-sm">{form.errors.read_on}</span>}
         </label>
 

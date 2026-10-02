@@ -25,10 +25,11 @@ class ReadingsController < ApplicationController
     redirect_back_or_to root_path, alert: "OpenLibrary indisponível: não foi possível adicionar o livro agora."
   end
 
-  # "Salvar" on the book page: only the owner can change read_on, rate and review
+  # "Salvar" on the book page: only the owner can change read_on, rate and review.
+  # On success, go to the profile: the redirect is a fresh GET, so the list shows the saved data.
   def update
     if @reading.update(reading_params)
-      redirect_back_or_to book_path(@reading.book), notice: "Leitura salva.", status: :see_other
+      redirect_to profile_path, notice: "Leitura salva.", status: :see_other
     else
       redirect_back_or_to book_path(@reading.book), inertia: { errors: @reading.errors.to_hash(true) }, status: :see_other
     end

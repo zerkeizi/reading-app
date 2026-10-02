@@ -37,7 +37,7 @@ export default function Modal({ title, onClose, position = 'center', children }:
     >
       <div className="p-5">
         <header className="mb-4 flex items-center justify-between gap-4">
-          <h2 className="text-lg">{title}</h2>
+          <h2 className="text-base">{title}</h2>
           <button type="button" aria-label="Fechar" onClick={onClose}
             className="size-8 font-heading text-xl leading-none hover:bg-placeholder">×</button>
         </header>

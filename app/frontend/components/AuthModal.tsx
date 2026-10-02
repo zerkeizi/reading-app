@@ -25,7 +25,7 @@ export default function AuthModal() {
       <div role="tablist" className="mb-5 grid grid-cols-2 border-2 border-ink">
         {TABS.map(({ value, label }) => (
           <button key={value} type="button" role="tab" aria-selected={tab === value} onClick={() => setTab(value)}
-            className={`py-2 text-sm font-bold ${tab === value ? 'bg-ink text-paper' : 'bg-paper text-ink hover:bg-placeholder'}`}>
+            className={`py-2 text-sm font-bold ${tab === value ? 'bg-ink text-paper' : 'bg-transparent text-ink hover:bg-placeholder'}`}>
             {label}
           </button>
         ))}
@@ -88,7 +88,7 @@ function Field({ label, error, ...input }: FieldProps) {
   return (
     <label className="flex flex-col gap-1">
       <span className="text-sm font-bold">{label}</span>
-      <input {...input} aria-invalid={error ? true : undefined} className="border-2 border-ink px-3 py-2" />
+      <input {...input} aria-invalid={error ? true : undefined} className="h-[46px] border-2 border-ink px-3" />
       {[error ?? []].flat().map((message) => <span key={message} role="alert" className="text-sm">{message}</span>)}
     </label>
   )

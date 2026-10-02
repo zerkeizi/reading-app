@@ -9,7 +9,8 @@ type Props = {
   className?: string
 }
 
-// Cover box: falls back to a placeholder when there is no URL or the image fails to load
+// Bordered cover box: falls back to a placeholder when there is no URL or the image fails to load.
+// object-contain: real covers aren't exactly 2:3, so fixed-height tiles show them whole on the placeholder fill.
 export default function Cover({ url, title, width, height, className = '' }: Props) {
   const [failed, setFailed] = useState(false)
   const style = width && height ? { width, height } : undefined
@@ -21,7 +22,7 @@ export default function Cover({ url, title, width, height, className = '' }: Pro
       <div
         role="img"
         style={style}
-        className={`flex shrink-0 items-center justify-center overflow-hidden bg-placeholder p-2 text-center text-xs break-words text-subtle ${className}`}
+        className={`flex shrink-0 items-center justify-center overflow-hidden border-2 border-ink bg-placeholder p-2 text-center text-xs break-words text-subtle ${className}`}
         aria-label={`Sem capa: ${title}`}
       >
         {showTitle && title}
@@ -34,7 +35,7 @@ export default function Cover({ url, title, width, height, className = '' }: Pro
       src={url}
       alt={`Capa de ${title}`}
       style={style}
-      className={`shrink-0 bg-placeholder object-cover ${className}`}
+      className={`shrink-0 border-2 border-ink bg-placeholder object-cover ${className}`}
       loading="lazy"
       onError={() => setFailed(true)}
     />

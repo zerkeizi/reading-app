@@ -10,7 +10,7 @@ export default function Avatar({ name, size = 32, className = '' }: Props) {
     <span
       aria-hidden="true"
       style={{ width: size, height: size, fontSize: size / 2.2 }}
-      className={`inline-flex shrink-0 items-center justify-center bg-placeholder font-heading text-ink ${className}`}
+      className={`inline-flex shrink-0 items-center justify-center bg-avatar font-heading text-paper ${className}`}
     >
       {name.trim().charAt(0).toUpperCase()}
     </span>

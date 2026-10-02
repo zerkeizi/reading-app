@@ -1,11 +1,12 @@
 import type { ButtonHTMLAttributes } from 'react'
 
-type Variant = 'primary' | 'secondary' | 'inverse'
+// primary: blue highlight (always with ink text) · secondary: outlined · dark: ink fill with cream text
+type Variant = 'primary' | 'secondary' | 'dark'
 
 const VARIANTS: Record<Variant, string> = {
-  primary: 'border-2 border-ink bg-ink text-paper hover:bg-muted hover:border-muted',
-  secondary: 'border-2 border-ink bg-paper text-ink hover:bg-placeholder',
-  inverse: 'border-2 border-paper bg-transparent text-paper hover:bg-paper hover:text-ink',
+  primary: 'border-2 border-ink bg-accent text-ink hover:brightness-95',
+  secondary: 'border-2 border-ink bg-transparent text-ink hover:bg-placeholder',
+  dark: 'border-2 border-ink bg-ink text-paper hover:bg-muted',
 }
 
 export const buttonClasses = (variant: Variant = 'primary', extra = '') =>

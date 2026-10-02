@@ -16,14 +16,16 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 }
 
 function Frame({ children }: { children: ReactNode }) {
-  const { props, flash } = usePage<SharedProps>()
+  const { props, flash, component } = usePage<SharedProps>()
+  // The floating "+" (add a book) only lives on the home catalog
+  const onHome = component === 'books/index'
   const { modal } = useModal()
-
+  
   return (
     <>
       <Header user={props.current_user} />
       {(flash.notice || flash.alert) && (
-        <div className="border-b-2 border-ink bg-placeholder">
+        <div className={`border-b-2 border-ink ${ flash.notice ? 'bg-accent' : 'text-paper bg-ink'}`}>
           <div className="mx-auto max-w-6xl px-4 py-2 text-sm font-bold md:px-8">
             {flash.notice && <p role="status">{flash.notice}</p>}
             {flash.alert && <p role="alert">{flash.alert}</p>}
@@ -31,9 +33,10 @@ function Frame({ children }: { children: ReactNode }) {
         </div>
       )}
 
-      <main className="mx-auto w-full max-w-6xl px-4 py-6 md:px-8">{children}</main>
+      {/* On the home, pb-28 leaves room for the fixed 60px "+" button so it never covers the last element */}
+      <main className={`mx-auto w-full max-w-6xl px-4 pt-6 md:px-8 ${onHome ? 'pb-28' : 'pb-10'}`}>{children}</main>
 
-      <AddBookButton />
+      {onHome && <AddBookButton />}
       {modal === 'auth' && <AuthModal />}
       {modal === 'addBook' && <AddBookModal />}
     </>

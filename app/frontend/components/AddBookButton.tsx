@@ -14,7 +14,7 @@ export default function AddBookButton() {
       type="button"
       aria-label="Adicionar livro"
       onClick={() => openModal('addBook')}
-      className="fixed right-6 bottom-6 z-10 flex size-[60px] items-center justify-center bg-ink font-heading text-3xl text-paper hover:bg-muted"
+      className="fixed right-6 bottom-6 z-10 flex size-[60px] items-center justify-center border-2 border-ink bg-accent font-heading text-3xl text-ink hover:brightness-95"
     >
       +
     </button>

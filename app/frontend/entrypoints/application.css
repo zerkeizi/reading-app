@@ -4,18 +4,21 @@
 @plugin '@tailwindcss/forms';
 
 /*
-  Design tokens (wireframe phase): black, grays and white, Arial Black headings, Arial body, no rounded
-  corners. Components only use these token classes (bg-ink, text-muted, font-heading...), so the final
-  visual style can be swapped here.
+  Design tokens (styled design, docs/design/design_handoff_reading_app_styled): cream background, dark
+  ink, one blue highlight, 2px borders, no rounded corners, no shadows. Components only use these token
+  classes (bg-paper, text-ink, bg-accent...), so the visual style lives here.
 */
 @theme {
-  --color-ink: #1a1a1a;
+  --color-paper: #F9F0E5;
+  --color-ink: #252525;
+  /* Primary actions and positive states. Text on it is always ink: white on this blue fails contrast. */
+  --color-accent: #2AB5C0;
+  --color-placeholder: #ece2d4;
   --color-muted: #555;
-  --color-subtle: #888;
-  --color-line: #bbb;
-  --color-placeholder: #ddd;
-  --color-paper: #fff;
-  --color-overlay: rgb(0 0 0 / 0.6);
+  --color-subtle: #777;
+  --color-avatar: #888;
+  --color-line: rgb(37 37 37 / 0.2);
+  --color-overlay: rgb(37 37 37 / 0.7);
 
   --font-heading: "Arial Black", Arial, sans-serif;
   --font-body: Arial, sans-serif;
@@ -28,6 +31,28 @@
   ::before,
   ::after {
     border-radius: 0;
+    box-shadow: none;
+  }
+
+  /*
+    @tailwindcss/forms paints inputs white and draws focus rings with box-shadow, using selectors like
+    [type='email'] and [type='email']:focus. :is(input[type], ...) gives these rules a higher specificity.
+  */
+  :is(input[type], select, textarea) {
+    background-color: var(--color-paper);
+    border-color: var(--color-ink);
+  }
+
+  :is(input[type], select, textarea):focus {
+    border-color: var(--color-ink);
+    box-shadow: none;
+    outline: 2px solid var(--color-ink);
+    outline-offset: 2px;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-ink);
+    outline-offset: 2px;
   }
 
   body {

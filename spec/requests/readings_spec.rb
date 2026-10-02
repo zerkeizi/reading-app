@@ -89,12 +89,12 @@ RSpec.describe "Readings", type: :request do
   describe "PATCH /readings/:id" do
     let(:changes) { { read_on: "2026-09-01", rate: 3.5, review: "Mudou minha vida." } }
 
-    it "lets the owner update read_on, rate and review" do
+    it "lets the owner update read_on, rate and review, then goes to the profile" do
       sign_in users(:one)
 
       patch reading_path(own_reading), params: changes, headers: headers
 
-      expect(response).to redirect_to(book_url(book))
+      expect(response).to redirect_to(profile_url)
       expect(response).to have_http_status(:see_other)
       expect(own_reading.reload).to have_attributes(read_on: Date.new(2026, 9, 1), rate: 3.5, review: "Mudou minha vida.")
     end
