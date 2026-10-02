@@ -8,7 +8,7 @@ class Book < ApplicationRecord
   COVER_SIZES = %w[S M L].freeze
   FILTER_FIELDS = %w[author genre year].freeze
 
-  # Home search: the select picks which field the text filters by (challenge filters: author, genre, year)
+  # Home search: the select picks which field the text filters by (filters: author, genre, year)
   scope :filter_by, ->(field, query) {
     query = query.to_s.strip
     next all if query.empty?

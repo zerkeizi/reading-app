@@ -50,7 +50,7 @@ export default function SearchBar({ q, field }: Props) {
         className="min-w-0 flex-1 border-0 bg-transparent px-3 text-base placeholder:text-avatar focus:ring-0 md:px-4 md:text-[17px]"
       />
       <Select label="Buscar por" value={currentField} options={FIELDS} onChange={setCurrentField}
-        className="border-l-2 border-ink" />
+        className="border-l-2 border-ink cursor-pointer" />
     </div>
   )
 }

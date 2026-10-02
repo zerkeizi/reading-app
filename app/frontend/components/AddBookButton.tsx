@@ -7,14 +7,14 @@ export default function AddBookButton() {
   const { current_user } = usePage<SharedProps>().props
   const { openModal } = useModal()
 
-  if (!current_user) return null
+  const modal  = !current_user ? 'auth' : 'addBook';
 
   return (
     <button
       type="button"
       aria-label="Adicionar livro"
-      onClick={() => openModal('addBook')}
-      className="fixed right-6 bottom-6 z-10 flex size-[60px] items-center justify-center border-2 border-ink bg-accent font-heading text-3xl text-ink hover:brightness-95"
+      onClick={() => openModal(modal)}
+      className="cursor-pointer fixed right-6 bottom-6 z-10 flex size-[60px] items-center justify-center border-2 border-ink bg-accent font-heading text-3xl text-ink hover:brightness-95"
     >
       +
     </button>

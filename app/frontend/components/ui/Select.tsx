@@ -80,7 +80,7 @@ export default function Select<T extends string>({ label, value, options, onChan
         aria-label={`${label}: ${options[selectedIndex].label}`}
         onClick={() => (open ? close() : show())}
         onKeyDown={onButtonKeyDown}
-        className={`flex h-full items-center gap-1.5 px-3 text-[15px] md:px-[18px] md:text-base ${open ? TRIGGER_OPEN : ''}`}
+        className={`flex cursor-pointer h-full items-center gap-1.5 px-3 text-[15px] md:px-[18px] md:text-base ${open ? TRIGGER_OPEN : ''}`}
       >
         {options[selectedIndex].label}
         <span aria-hidden="true">{open ? '▴' : '▾'}</span>

@@ -25,7 +25,7 @@ export default function Header({ user }: { user: User | null }) {
 
 function SignInButton() {
   const { openModal } = useModal()
-  return <Button onClick={() => openModal('auth')} className="py-1.5 text-base">Entrar</Button>
+  return <Button onClick={() => openModal('auth')} className="py-1.5 text-base cursor-pointer">Entrar</Button>
 }
 
 const signOut = () => router.delete('/session')
