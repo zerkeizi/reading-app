@@ -34,7 +34,7 @@ jobs:
       # The frontend uses Vite + npm (importmap was removed), so audit the npm
       # dependencies from package-lock.json instead of `bin/importmap audit`.
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -101,7 +101,7 @@ jobs:
       # Request specs render Inertia pages, and vite_rails builds the frontend
       # on demand in the test env (autoBuild), so Node + node_modules are needed.
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
