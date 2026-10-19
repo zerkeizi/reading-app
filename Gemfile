@@ -65,7 +65,7 @@ group :test do
   gem "webmock"
 end
 
-gem "inertia_rails", "~> 3.22"
+gem "inertia_rails", "~> 3.23"
 gem "vite_rails", "~> 3.11"
 
 # Authorization policies (who can do what with each record) [https://github.com/varvet/pundit]
