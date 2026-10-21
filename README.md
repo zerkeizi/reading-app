@@ -1,20 +1,18 @@
-# Catálogo coletivo
+# Collective catalog
 
-Um catálogo coletivo de livros lidos. Qualquer pessoa navega pelo catálogo; quem está logado marca livros como lidos, com data, nota e resenha. Os livros vêm do OpenLibrary.
+A collective catalog of books read. Anyone can browse the catalog; logged-in users mark books as read, with a date, rating, and review. Books come from OpenLibrary.
 
-Discussões e decisões em detalhe: [DISCUSSION.md](DISCUSSION.md).
-
-## Como rodar
+## How to run
 
 ```sh
 docker compose up
 ```
 
-A aplicação sobe em http://localhost:3000. Na primeira execução o banco é criado, migrado e populado com dados de exemplo.
+The app starts at http://localhost:3000. On the first run the database is created, migrated, and seeded with sample data.
 
-Usuários de exemplo (senha `password`): `cecilia@example.com`, `bruno@example.com`, `ana@example.com`.
+Sample users (password `password`): `cecilia@example.com`, `bruno@example.com`, `ana@example.com`.
 
-Testes:
+Tests:
 
 ```sh
 docker compose run --rm web bundle exec rspec
@@ -22,60 +20,60 @@ docker compose run --rm web bundle exec rspec
 
 **Stack:** Ruby 3.3.9, Rails 8.1, PostgreSQL 16, React + TypeScript via Inertia.js (Vite, Tailwind), RSpec + WebMock, Pundit, Faraday, Kaminari.
 
-## Decisões técnicas
+## Technical decisions
 
-### Cadastro duplicado de livros
-Livros registrados no catálogo possuem uma identificação externa `external_id` única `unique` na tabela `books` que representa sua identificação no serviço externo (OpenLibrary). Esse valor é usado como referência para garantir que o mesmo livro não seja cadastrado duas vezes.
+### Duplicate book registration
+Books registered in the catalog have a `unique` external identifier, `external_id`, in the `books` table, which represents their identifier in the external service (OpenLibrary). This value is used as a reference to ensure the same book is never registered twice.
 
-### Indisponibilidade ou resposta vazia do OpenLibrary
-- **Resposta vazia** (status 200, nenhum resultado): o modal mostra "Nenhum livro encontrado".
-- **Indisponível** (timeout, erro de conexão, 5xx, 429 ou JSON inválido): a busca responde 503 e o modal avisa que o OpenLibrary está fora do ar; adicionar um livro novo não cria nada.
+### OpenLibrary unavailable or returning empty responses
+- **Empty response** (status 200, no results): the modal shows "No books found".
+- **Unavailable** (timeout, connection error, 5xx, 429, or invalid JSON): the search responds with 503 and the modal warns that OpenLibrary is down; adding a new book creates nothing.
 
-### Acesso ao `/books.json`
-Público: são os mesmos dados da página inicial, que já é pública. Somente leitura, sem dados de usuário, com os mesmos filtros e paginação da home e limite de 60 requisições por minuto.
+### Access to `/books.json`
+Public: it exposes the same data as the home page, which is already public. Read-only, no user data, with the same filters and pagination as the home page, and a limit of 60 requests per minute.
 
 ```sh
 curl "http://localhost:3000/books.json?q=tolkien&field=author"
 ```
 
-### Edição do livro pelo usuário que o registrou
-Na descrição do projeto é mencionado que Cecília volta à plataforma e faz edições o livro que registrou. Acredito que dados como titulo, ano de publicação, gênero deveriam ser somente leitura já que não parece fazer muito sentido alterá-los uma vez que são puxados da Open Library com dados já corretos.
+### Editing a book by the user who registered it
+The project description mentions that Cecília comes back to the platform and edits the book she registered. I believe data such as title, publication year, and genre should be read-only, since it doesn't make much sense to change them once they are pulled from Open Library with already-correct data.
 
-Considerando isso, uma vez que o usuário registra um livro que não havia no catálogo, este passa a fazer parte do acervo, mesmo que o mesmo usuário remova dos seus livros lidos. Os dados abertos para edição ficam na tabela pivot, responsável pela associação entre `books` e `users`, e são eles: lido em (`read_on`), nota (`rate`) e resenha (`review`)
+With that in mind, once a user registers a book that wasn't in the catalog, it becomes part of the collection, even if that same user later removes it from their read books. The fields open for editing live in the pivot table `readings` responsible for the association between `books` and `users`, and they are: read on (`read_on`), rating (`rate`), and review (`review`).
 
-# A lista paginada de livros
-Ela é ordenada por livros lidos mais recentemente, essa regra se dá por uma coluna chamada `last_read_at` na tabela `books`. Essa tabela é alimentada TODA vez que um livro novo é registrado. Eu escolhi ir por esse caminho pra manter uma consistência de dados na regra de ordenação. No futuro, em um cenário onde a gravação em disco seja muito pesada, é provavel que essa coluna deva ter seu dado computado através de um job, melhorando assim a performance em detrimento de consisntencia. 
+### The paginated book list
+It is ordered by most recently read books. This rule relies on a column called `last_read_at` in the `books` table, which is updated EVERY time a new book is registered. I chose this approach to keep the data consistent for the ordering rule. In the future, in a scenario where disk writes become too heavy, this column should probably be computed by a background job, improving performance at the expense of consistency.
 
-### Arquitetura
-- **Rails decide, React mostra**: dados, regras e permissões ficam no Rails; o React recebe tudo pronto como props do Inertia (inclusive se o usuário pode editar algo).
-- **OpenLibrary pelo backend** (como sugerido, usando Faraday): o navegador envia só o `external_id` do livro escolhido e o servidor busca os dados de novo, garantindo integridade dos dados de cada livro.
-- **Autenticação** nativa do Rails 8 ao invés de outra gem como Devise. Os controllers ficam no app, renderizando páginas pelo Inertia sem sobrescrever nada.
-- **Autorização com Pundit**: como o livro é compartilhado, "editar/remover um livro" significa editar/remover a sua leitura, e só o dono pode fazer isso.
-- **Filtros**: o select da busca escolhe o campo filtrado (Autor, Gênero ou Ano). A lista é ordenada pela leitura mais recente e paginada com Kaminari, 9 por página.
+### Architecture
+- **Rails decides, React displays**: data, rules, and permissions live in Rails; React receives everything ready-made as Inertia props (including whether the user can edit something).
+- **OpenLibrary through the backend** (as suggested, using Faraday): the browser sends only the `external_id` of the chosen book and the server fetches the data again, guaranteeing the integrity of each book's data.
+- **Authentication** with Rails 8's built-in generator instead of a gem like Devise. The controllers live in the app, rendering pages through Inertia without overriding anything.
+- **Authorization with Pundit**: since the book is shared, "editing/removing a book" means editing/removing your reading of it, and only its owner can do that.
+- **Filters**: the search select chooses the filtered field (Author, Genre, or Year). The list is ordered by most recent reading and paginated with Kaminari, 9 per page.
 
 
-## Com mais tempo
+## With more time
 
-1. Melhorar registro de usuário:
-  - No formulário, pedir confirmação e complexidade de senha 
-  - Confirmação por email
-  - Recuperação de senha
+1. Improve user registration:
+  - In the form, require password confirmation and complexity
+  - Email confirmation
+  - Password recovery
 
-2. Capas independentes do OpenLibrary, salvando elas num serviço próprio.
+2. Covers independent from OpenLibrary, stored in our own service.
 
-3. Adicionar outros serviços pra manter o app redundante em caso de indisponibilidade do OpenLibrary.
+3. Add other services to keep the app redundant in case OpenLibrary is unavailable.
 
-4. Modal de confirmação na hora de marcar como não lido e soft delete - hoje o sistema deleta o registro na tabela pivot mandando nota e resenha pro espaço.
+4. A confirmation modal when marking a book as unread, plus soft delete — today the system deletes the record in the pivot table, sending the rating and review into the void.
 
-5. Também atualizar `last_read_at` quando o usuário editar seu read_on para uma data mais recente que a atual. Ex.: A pessoa leu o livro de novo - deve mostrar no topo do catálogo.
+5. Also update `last_read_at` when the user changes their `read_on` to a date more recent than the current one. E.g.: the person read the book again — it should show up at the top of the catalog.
 
-## Uso de IA
-Usei o Claude Code como meu par em pair-programming durante o projeto. 
+## AI usage
+I used Claude Code as my pair-programming partner throughout the project.
 
-- **Plan mode** para cada funcionalidade maior: a IA escrevia o plano e me fazia as perguntas em aberto; só depois da minha aprovação começava a programar.
-- **Etapa por etapa**, revisando e fazendo o commit de cada etapa antes da próxima, com aprovação manual de cada comando e edição.
-- **Skills**: `todo`, que registra as decisões e controla tarefas num arquivo `todo.txt`, e `rails-mentor`, que comenta o código sugerido para eu conseguir explicar cada linha.
-- **Subtarefas em paralelo (/subtasks)** para dúvidas fora da etapa atual (por que chamar o OpenLibrary pelo backend, como guardar imagens no Rails, resumo da API do OpenLibrary).
-- **Verificação** de cada etapa na aplicação rodando, além dos testes, o que pegou bugs que os testes não pegavam.
+- **Plan mode** for every larger feature: the AI wrote the plan and asked me the open questions; it only started coding after my approval.
+- **Step by step**, reviewing and committing each step before the next one, with manual approval of every command and edit.
+- **Skills**: `todo`, which records decisions and tracks tasks in a `todo.txt` file, and `rails-mentor`, which comments the suggested code so I can explain every line.
+- **Parallel subtasks (/subtasks)** for questions outside the current step (why call OpenLibrary from the backend, how to store images in Rails, a summary of the OpenLibrary API).
+- **Verification** of each step in the running application, in addition to the tests, which caught bugs the tests didn't.
 
-**Exemplo de sugestão incorreta da IA:** ao planejar os models, a IA propôs uma relação de 1-n entre usuários e livros. Isso guardaria o mesmo livro uma vez por leitor. Recusei e pedi um modelo n-n: `books` é um catálogo compartilhado e `readings` liga usuários e livros, com a data, a nota e a resenha de cada um. Essa decisão moldou o resto da aplicação.
+**Example of an incorrect AI suggestion:** when planning the models, the AI proposed a 1-n relationship between users and books. That would store the same book once per reader. I rejected it and asked for an n-n model: `books` is a shared catalog and `readings` links users and books, with each one's date, rating, and review. This decision shaped the rest of the application.
